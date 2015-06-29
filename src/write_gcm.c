@@ -1824,8 +1824,10 @@ static int wg_config(oconfig_item_t *ci) /* {{{ */
 
   DEBUG("write_gcm: Registering write callback with URL %s", cb->url);
 
-  /* email -> pkey == (!email || pkey) */
+#if HAVE_LIBSSL
+  /* If cb->email is set, then cb->pkey must also be set. */
   assert ((cb->email == NULL) || (cb->pkey != NULL));
+#endif /* HAVE_LIBSSL */
 
   memset(&user_data, 0, sizeof(user_data));
   user_data.data = cb;
