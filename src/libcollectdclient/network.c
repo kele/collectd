@@ -47,6 +47,10 @@
 # include <net/if.h>
 #endif
 
+#ifdef WIN32
+#include <netioapi.h>
+#endif
+
 #include "collectd/network.h"
 #include "collectd/network_buffer.h"
 
