@@ -28,6 +28,8 @@
 **/
 
 #if HAVE_CONFIG_H
+#include </home/kele/build_gnulib/config.h>
+#include <config.h.in>
 # include "config.h"
 #endif
 
@@ -43,6 +45,8 @@
 #ifdef HAVE_MATH_H
 # include <math.h>
 #endif
+
+#include <unistd.h>
 
 /* for getaddrinfo */
 #include <sys/types.h>
@@ -981,11 +985,23 @@ int format_values (char *ret, size_t ret_len, /* {{{ */
                         BUFFER_ADD (":"GAUGE_FORMAT, rates[i]);
                 }
                 else if (ds->ds[i].type == DS_TYPE_COUNTER)
+#ifdef WIN32
+                        BUFFER_ADD (":%I64u", vl->values[i].counter);
+#else
                         BUFFER_ADD (":%llu", vl->values[i].counter);
+#endif
                 else if (ds->ds[i].type == DS_TYPE_DERIVE)
+#ifdef WIN32
+                        BUFFER_ADD (":%I64i", vl->values[i].derive);
+#else
                         BUFFER_ADD (":%"PRIi64, vl->values[i].derive);
+#endif
                 else if (ds->ds[i].type == DS_TYPE_ABSOLUTE)
+#ifdef WIN32
+                        BUFFER_ADD (":%I64u", vl->values[i].absolute);
+#else
                         BUFFER_ADD (":%"PRIu64, vl->values[i].absolute);
+#endif
                 else
                 {
                         ERROR ("format_values: Unknown data source type: %i",
