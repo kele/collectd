@@ -148,6 +148,10 @@ typedef int _Bool;
 # include <sys/isa_defs.h>
 #endif
 
+#ifdef WIN32
+#define __LITTLE_ENDIAN 1234
+#endif
+
 #ifndef BYTE_ORDER
 # if defined(_BYTE_ORDER)
 #  define BYTE_ORDER _BYTE_ORDER
