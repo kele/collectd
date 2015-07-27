@@ -24,9 +24,10 @@
  *   Florian octo Forster <octo at collectd.org>
  **/
 
-#if HAVE_CONFIG_H
-# include <config.h>
-#endif
+#include </home/kele/build_gnulib/config.h>
+#include <config.h.in>
+#include <config.h>
+
 
 #if !defined(__GNUC__) || !__GNUC__
 # define __attribute__(x) /**/

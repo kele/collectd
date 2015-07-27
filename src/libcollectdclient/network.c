@@ -26,6 +26,10 @@
  *   Max Henkel <henkel at gmx.at>
  **/
 
+#include </home/kele/build_gnulib/config.h>
+#include <config.h.in>
+#include <config.h>
+
 #include "collectd.h"
 
 #include <stdlib.h>

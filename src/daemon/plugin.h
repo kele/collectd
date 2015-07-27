@@ -33,9 +33,7 @@
 #include "meta_data.h"
 #include "utils_time.h"
 
-#if HAVE_PTHREAD_H
 # include <pthread.h>
-#endif
 
 #define PLUGIN_FLAGS_GLOBAL 0x0001
 
@@ -397,6 +395,7 @@ void plugin_log (int level, const char *format, ...)
 int parse_log_severity (const char *severity);
 int parse_notif_severity (const char *severity);
 
+#undef ERROR
 #define ERROR(...)   plugin_log (LOG_ERR,     __VA_ARGS__)
 #define WARNING(...) plugin_log (LOG_WARNING, __VA_ARGS__)
 #define NOTICE(...)  plugin_log (LOG_NOTICE,  __VA_ARGS__)
