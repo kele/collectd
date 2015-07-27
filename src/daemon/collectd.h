@@ -27,7 +27,8 @@
 #ifndef COLLECTD_H
 #define COLLECTD_H
 
-#define restrict
+#undef restrict
+#define restrict __restrict
 
 #if HAVE_CONFIG_H
 # include "config.h"
