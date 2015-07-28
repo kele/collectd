@@ -891,7 +891,11 @@ static void stop_write_threads (void) /* {{{ */
 	if (write_threads == NULL)
 		return;
 
+#ifdef WIN32
+	INFO ("collectd: Stopping %u write threads.", (unsigned)write_threads_num);
+#else
 	INFO ("collectd: Stopping %zu write threads.", write_threads_num);
+#endif
 
 	pthread_mutex_lock (&write_lock);
 	write_loop = 0;

@@ -1,4 +1,4 @@
-/**
+ /**
  * collectd - src/utils_cache.c
  * Copyright (C) 2007-2010  Florian octo Forster
  *
@@ -560,9 +560,15 @@ gauge_t *uc_get_rate (const data_set_t *ds, const value_list_t *vl)
    * values are returned. */
   if (ret_num != (size_t) ds->ds_num)
   {
+#ifdef WIN32
+    ERROR ("utils_cache: uc_get_rate: ds[%s] has %i values, "
+	"but uc_get_rate_by_name returned %u.",
+	ds->type, ds->ds_num, (unsigned)ret_num);
+#else
     ERROR ("utils_cache: uc_get_rate: ds[%s] has %i values, "
 	"but uc_get_rate_by_name returned %zu.",
 	ds->type, ds->ds_num, ret_num);
+#endif
     sfree (ret);
     return (NULL);
   }
