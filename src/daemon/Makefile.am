@@ -14,15 +14,12 @@ AM_CPPFLAGS += -DPLUGINDIR='"${pkglibdir}"'
 AM_CPPFLAGS += -DPKGDATADIR='"${pkgdatadir}"'
 
 # Link to these libraries..
-COMMON_LIBS =
+COMMON_LIBS = -lgnu -lpthread
 if BUILD_WITH_LIBRT
 COMMON_LIBS += -lrt
 endif
 if BUILD_WITH_LIBPOSIX4
 COMMON_LIBS += -lposix4
-endif
-if BUILD_WITH_LIBSOCKET
-COMMON_LIBS += -lsocket
 endif
 if BUILD_WITH_LIBRESOLV
 COMMON_LIBS += -lresolv
