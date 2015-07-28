@@ -40,6 +40,7 @@
 #ifndef WIN32
     #include <sys/un.h>
 #else
+    #include <sys/stat.h>
     #include <unistd.h>
 #endif
 #include <netdb.h>

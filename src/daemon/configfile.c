@@ -25,6 +25,14 @@
  *   Sebastian tokkee Harl <sh at tokkee.org>
  **/
 
+
+#ifdef WIN32
+#include </home/kele/build_gnulib/config.h>
+#include <config.h.in>
+#include <config.h>
+#include <sys/stat.h>
+#endif
+    
 #include "collectd.h"
 
 #include "liboconfig/oconfig.h"

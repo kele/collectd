@@ -24,6 +24,14 @@
  *   Florian octo Forster <ff at octo.it>
  **/
 
+#include </home/kele/build_gnulib/config.h>
+#include <config.h.in>
+#include <config.h>
+
+#ifdef WIN32
+#include <sys/time.h>
+#endif
+
 #include "collectd.h"
 #include "utils_time.h"
 #include "plugin.h"
