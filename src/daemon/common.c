@@ -1217,6 +1217,12 @@ int parse_values (char *buffer, value_list_t *vl, const data_set_t *ds)
 int getpwnam_r (const char *name, struct passwd *pwbuf, char *buf,
 		size_t buflen, struct passwd **pwbufp)
 {
+    /* Just to keep the build going. */
+#ifdef WIN32
+	pthread_mutex_lock (&getpwnam_r_lock);
+	pthread_mutex_unlock (&getpwnam_r_lock);
+    return (0);
+#else
 	int status = 0;
 	struct passwd *pw;
 
@@ -1263,6 +1269,7 @@ int getpwnam_r (const char *name, struct passwd *pwbuf, char *buf,
 	pthread_mutex_unlock (&getpwnam_r_lock);
 
 	return (status);
+#endif
 } /* int getpwnam_r */
 #endif /* !HAVE_GETPWNAM_R */
 

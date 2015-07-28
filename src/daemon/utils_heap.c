@@ -24,6 +24,10 @@
  *   Florian octo Forster <octo at collectd.org>
  **/
 
+#include </home/kele/build_gnulib/config.h>
+#include <config.h.in>
+#include <config.h>
+
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>

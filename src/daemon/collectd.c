@@ -25,6 +25,10 @@
  *   Alvaro Barcellos <alvaro.barcellos at gmail.com>
  **/
 
+#include </home/kele/build_gnulib/config.h>
+#include <config.h.in>
+#include <config.h>
+
 #include "collectd.h"
 #include "common.h"
 
@@ -33,7 +37,11 @@
 
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <sys/un.h>
+#ifndef WIN32
+    #include <sys/un.h>
+#else
+    #include <unistd.h>
+#endif
 #include <netdb.h>
 
 #include <pthread.h>
@@ -482,6 +490,9 @@ int notify_systemd (void)
 }
 #endif /* KERNEL_LINUX */
 
+#ifdef WIN32
+#undef COLLECT_DAEMON
+#endif
 int main (int argc, char **argv)
 {
 	struct sigaction sig_int_action;
