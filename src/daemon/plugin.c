@@ -25,6 +25,10 @@
  *   Sebastian Harl <sh at tokkee.org>
  **/
 
+#include </home/kele/build_gnulib/config.h>
+#include <config.h.in>
+#include <config.h>
+
 #include "collectd.h"
 #include "common.h"
 #include "plugin.h"
@@ -39,6 +43,8 @@
 #include "utils_random.h"
 
 #include <ltdl.h>
+
+#include <unistd.h>
 
 /*
  * Private structures
