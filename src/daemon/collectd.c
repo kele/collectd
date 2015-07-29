@@ -42,6 +42,8 @@
 #else
     #include <sys/stat.h>
     #include <unistd.h>
+    #undef gethostname
+    #include <Winsock2.h>
 #endif
 #include <netdb.h>
 

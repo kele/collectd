@@ -14,7 +14,7 @@ AM_CPPFLAGS += -DPLUGINDIR='"${pkglibdir}"'
 AM_CPPFLAGS += -DPKGDATADIR='"${pkgdatadir}"'
 
 # Link to these libraries..
-COMMON_LIBS = -lgnu -lpthread
+COMMON_LIBS = -lgnu -lpthread -lws2_32 
 if BUILD_WITH_LIBRT
 COMMON_LIBS += -lrt
 endif
