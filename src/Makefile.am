@@ -32,7 +32,7 @@ liblookup_la_SOURCES = utils_vl_lookup.c utils_vl_lookup.h
 liblookup_la_LIBADD = daemon/libavltree.la daemon/libcommon.la
 
 sbin_PROGRAMS = collectdmon
-bin_PROGRAMS = collectd-nagios collectdctl collectd-tg
+bin_PROGRAMS = collectdctl collectd-tg
 
 collectdmon_SOURCES = collectdmon.c
 collectdmon_CPPFLAGS = $(AM_CPPFLAGS)
