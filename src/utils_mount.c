@@ -21,6 +21,10 @@
  *   Niki W. Waibel <niki.waibel@gmx.net>
 **/
 
+#include </home/kele/build_gnulib/config.h>
+#include <config.h.in>
+#include <config.h>
+
 #include "collectd.h"
 #include "utils_mount.h"
 
@@ -64,6 +68,8 @@
 #if HAVE_PATHS_H
 #  include <paths.h>
 #endif
+#include <sys/stat.h>
+#include <fcntl.h>
 
 #ifdef COLLECTD_MNTTAB
 #  undef COLLECTD_MNTTAB
