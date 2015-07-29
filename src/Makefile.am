@@ -31,8 +31,8 @@ libmount_la_LIBADD = daemon/libcommon.la
 liblookup_la_SOURCES = utils_vl_lookup.c utils_vl_lookup.h
 liblookup_la_LIBADD = daemon/libavltree.la daemon/libcommon.la
 
-sbin_PROGRAMS = collectdmon
-bin_PROGRAMS = collectdctl collectd-tg
+sbin_PROGRAMS = 
+bin_PROGRAMS = 
 
 collectdmon_SOURCES = collectdmon.c
 collectdmon_CPPFLAGS = $(AM_CPPFLAGS)

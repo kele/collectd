@@ -28,7 +28,9 @@
 # define __attribute__(x) /**/
 #endif
 
-#include "config.h"
+#include </home/kele/build_gnulib/config.h>
+#include <config.h.in>
+#include <config.h>
 
 #include <assert.h>
 
@@ -43,7 +45,9 @@
 
 #include <string.h>
 
+#ifndef WIN32
 #include <syslog.h>
+#endif /* !WIN32 */
 
 #include <sys/resource.h>
 #include <sys/time.h>
@@ -62,6 +66,9 @@
 #ifndef WCOREDUMP
 # define WCOREDUMP(s) 0
 #endif /* ! WCOREDUMP */
+
+#define syslog(...) 
+#define openlog(...)
 
 static int loop    = 0;
 static int restart = 0;
