@@ -4,7 +4,7 @@ SUBDIRS += liboconfig
 endif
 SUBDIRS += daemon
 
-PLUGIN_LDFLAGS = -module -avoid-version -export-symbols-regex '\<module_register\>'
+PLUGIN_LDFLAGS = -module -avoid-version -export-symbols-regex '\<module_register\>' -shared -no-undefined
 
 if COMPILER_IS_GCC
 AM_CFLAGS = -Wall -Werror
