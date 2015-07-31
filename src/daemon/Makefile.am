@@ -51,6 +51,7 @@ libplugin_mock_la_SOURCES = plugin_mock.c utils_cache_mock.c utils_time_mock.c
 collectd_SOURCES = collectd.c collectd.h \
 		   configfile.c configfile.h \
 		   filter_chain.c filter_chain.h \
+		   globals.c globals.h \
 		   meta_data.c meta_data.h \
 		   plugin.c plugin.h \
 		   utils_cache.c utils_cache.h \
