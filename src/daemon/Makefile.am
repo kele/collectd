@@ -13,6 +13,8 @@ endif
 AM_CPPFLAGS += -DPLUGINDIR='"${pkglibdir}"'
 AM_CPPFLAGS += -DPKGDATADIR='"${pkgdatadir}"'
 
+COMMON_LDFLAGS = -no-undefined -shared
+
 # Link to these libraries..
 COMMON_LIBS = -lgnu -lpthread -lws2_32 
 if BUILD_WITH_LIBRT
@@ -38,18 +40,24 @@ AUTOMAKE_OPTIONS = subdir-objects
 
 sbin_PROGRAMS = collectd
 
-noinst_LTLIBRARIES = libavltree.la libcommon.la libheap.la libplugin_mock.la
+lib_LTLIBRARIES = libavltree.la libcommon.la libheap.la libplugin_mock.la \
+				  libcollectd.la
 
 libavltree_la_SOURCES = utils_avltree.c utils_avltree.h
+libavltree_la_LDFLAGS = $(COMMON_LDFLAGS)
 
 libcommon_la_SOURCES = common.c common.h
+libcommon_la_LDFLAGS = $(COMMON_LDFLAGS)
+libcommon_la_LIBADD = -lpthread
 
 libheap_la_SOURCES = utils_heap.c utils_heap.h
+libheap_la_LDFLAGS = $(COMMON_LDFLAGS)
 
 libplugin_mock_la_SOURCES = plugin_mock.c utils_cache_mock.c utils_time_mock.c
 
-collectd_SOURCES = collectd.c collectd.h \
-		   configfile.c configfile.h \
+collectd_SOURCES = collectd.c collectd.h
+
+libcollectd_la_SOURCES = configfile.c configfile.h \
 		   filter_chain.c filter_chain.h \
 		   globals.c globals.h \
 		   meta_data.c meta_data.h \
@@ -65,12 +73,16 @@ collectd_SOURCES = collectd.c collectd.h \
 		   utils_time.c utils_time.h \
 		   types_list.c types_list.h \
 		   utils_threshold.c utils_threshold.h
+libcollectd_la_CPPFLAGS =  $(AM_CPPFLAGS) $(LTDLINCL)
+libcollectd_la_CFLAGS = $(AM_CFLAGS)
+libcollectd_la_LDFLAGS = $(COMMON_LDFLAGS)
+libcollectd_la_LIBADD = libavltree.la libcommon.la libheap.la -lm $(COMMON_LIBS)
 
 
 collectd_CPPFLAGS =  $(AM_CPPFLAGS) $(LTDLINCL)
 collectd_CFLAGS = $(AM_CFLAGS)
 collectd_LDFLAGS = -export-dynamic
-collectd_LDADD = libavltree.la libcommon.la libheap.la -lm $(COMMON_LIBS)
+collectd_LDADD = libcollectd.la
 collectd_DEPENDENCIES =
 
 # The daemon needs to call sg_init, so we need to link it against libstatgrab,
