@@ -41,7 +41,7 @@ AUTOMAKE_OPTIONS = subdir-objects
 sbin_PROGRAMS = collectd
 
 lib_LTLIBRARIES = libcollectd.la
-noinst_LIBRARIES = libplugin_mock.la
+noinst_LTLIBRARIES = libplugin_mock.la
 
 
 libplugin_mock_la_SOURCES = plugin_mock.c utils_cache_mock.c utils_time_mock.c
@@ -71,7 +71,7 @@ libcollectd_la_SOURCES =  \
 libcollectd_la_CPPFLAGS =  $(AM_CPPFLAGS) $(LTDLINCL)
 libcollectd_la_CFLAGS = $(AM_CFLAGS)
 libcollectd_la_LDFLAGS = $(COMMON_LDFLAGS)
-libcollectd_la_LIBADD = -lm /usr/lib/libltdl.dll.a $(COMMON_LIBS)
+libcollectd_la_LIBADD = -lm $(COMMON_LIBS) -lltdl #/usr/x86_64-w64-mingw32/sys-root/mingw/lib/libltdl.dll.a
 
 
 collectd_CPPFLAGS =  $(AM_CPPFLAGS) $(LTDLINCL)
