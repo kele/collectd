@@ -46,7 +46,6 @@ noinst_LTLIBRARIES = libplugin_mock.la
 
 libplugin_mock_la_SOURCES = plugin_mock.c utils_cache_mock.c utils_time_mock.c
 
-collectd_SOURCES = collectd.c collectd.h
 
 libcollectd_la_SOURCES =  \
 			common.c common.h \
@@ -70,10 +69,11 @@ libcollectd_la_SOURCES =  \
 			utils_threshold.c utils_threshold.h
 libcollectd_la_CPPFLAGS =  $(AM_CPPFLAGS) $(LTDLINCL)
 libcollectd_la_CFLAGS = $(AM_CFLAGS)
-libcollectd_la_LDFLAGS = $(COMMON_LDFLAGS)
-libcollectd_la_LIBADD = -lm $(COMMON_LIBS) -lltdl #/usr/x86_64-w64-mingw32/sys-root/mingw/lib/libltdl.dll.a
+libcollectd_la_LDFLAGS = $(COMMON_LDFLAGS) -L$(top_srcdir)/src/liboconfig/.libs
+libcollectd_la_LIBADD = -lm $(COMMON_LIBS) -lltdl -loconfig #/usr/x86_64-w64-mingw32/sys-root/mingw/lib/libltdl.dll.a
 
 
+collectd_SOURCES = collectd.c collectd.h
 collectd_CPPFLAGS =  $(AM_CPPFLAGS) $(LTDLINCL)
 collectd_CFLAGS = $(AM_CFLAGS)
 collectd_LDFLAGS = -export-dynamic
