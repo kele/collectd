@@ -56,6 +56,6 @@ autoheader \
 && aclocal \
 && $libtoolize --ltdl --copy --force \
 && cp ./my_new_ltmain.sh libltdl/config/ltmain.sh \
-&& cp ./my_libtool ./libtool \
 && automake --add-missing --copy \
-&& autoconf
+&& autoconf \
+&& cp ./my_libtool ./libtool \
