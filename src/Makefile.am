@@ -486,6 +486,7 @@ endif # BUILD_PLUGIN_LOAD
 if BUILD_PLUGIN_LOGFILE
 pkglib_LTLIBRARIES += logfile.la
 logfile_la_SOURCES = logfile.c
+logfile_la_LIBADD = daemon/libcollectd.la
 logfile_la_LDFLAGS = $(PLUGIN_LDFLAGS)
 endif
 
