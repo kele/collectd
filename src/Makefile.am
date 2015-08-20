@@ -26,10 +26,10 @@ AUTOMAKE_OPTIONS = subdir-objects
 noinst_LTLIBRARIES = libmount.la liblookup.la
 
 libmount_la_SOURCES = utils_mount.c utils_mount.h
-libmount_la_LIBADD = daemon/libcommon.la
+libmount_la_LIBADD = daemon/libcollectd.la
 
 liblookup_la_SOURCES = utils_vl_lookup.c utils_vl_lookup.h
-liblookup_la_LIBADD = daemon/libavltree.la daemon/libcommon.la
+liblookup_la_LIBADD = daemon/libcollectd.la
 
 sbin_PROGRAMS = 
 bin_PROGRAMS = 
