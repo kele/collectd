@@ -35,5 +35,5 @@ cd gllib
 # We have to rebuild libnug.a to get the list of *.o files to build a dll later
 rm libgnu.a
 OBJECT_LIST=`make V=1 | grep "ar" | cut -d' ' -f4-`
-$CXX -shared -o libgnu.dll $OBJECT_LIST -lws2_32 -lpthread
+$CXX -shared -o libgnu.dll $OBJECT_LIST -lws2_32 -lpthread #-Wl,--out-implib,libgnu.dll.a
 rm libgnu.a # get rid of it, to use libgnu.dll

@@ -767,7 +767,9 @@ AC_CHECK_FUNCS(nanosleep,
         [nanosleep_needs_rt="yes"],
         AC_CHECK_LIB(posix4, nanosleep,
             [nanosleep_needs_posix4="yes"],
-            AC_MSG_ERROR(cannot find nanosleep))))
+            AC_CHECK_FUNCS(rpl_nanosleep,
+                [],
+                AC_MSG_ERROR(cannot find nanosleep)))))
 
 AM_CONDITIONAL(BUILD_WITH_LIBRT, test "x$clock_gettime_needs_rt" = "xyes" || test "x$nanosleep_needs_rt" = "xyes")
 AM_CONDITIONAL(BUILD_WITH_LIBPOSIX4, test "x$clock_gettime_needs_posix4" = "xyes" || test "x$nanosleep_needs_posix4" = "xyes")
