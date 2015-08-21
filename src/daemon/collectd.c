@@ -25,9 +25,9 @@
  *   Alvaro Barcellos <alvaro.barcellos at gmail.com>
  **/
 
-#include </home/kele/build_gnulib/config.h>
-#include <config.h.in>
+#ifdef _WIN32
 #include <config.h>
+#endif /* _WIN32 */
 
 #include "collectd.h"
 #include "common.h"

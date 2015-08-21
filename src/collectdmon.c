@@ -28,9 +28,9 @@
 # define __attribute__(x) /**/
 #endif
 
-#include </home/kele/build_gnulib/config.h>
-#include <config.h.in>
+#ifdef _WIN32
 #include <config.h>
+#endif /* _WIN32 */
 
 #include <assert.h>
 

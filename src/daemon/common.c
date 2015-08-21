@@ -28,8 +28,6 @@
 **/
 
 #if HAVE_CONFIG_H
-#include </home/kele/build_gnulib/config.h>
-#include <config.h.in>
 #include "config.h"
 #endif
 

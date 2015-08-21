@@ -21,9 +21,9 @@
  *   Sebastian "tokkee" Harl <sh@tokkee.org>
  **/
 
-#include </home/kele/build_gnulib/config.h>
-#include <config.h.in>
+#ifdef _WIN32
 #include <config.h>
+#endif
 
 #include <stdlib.h>
 #include <unistd.h>

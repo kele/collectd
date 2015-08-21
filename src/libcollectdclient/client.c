@@ -24,9 +24,9 @@
  *   Florian octo Forster <octo at collectd.org>
  **/
 
-#include </home/kele/build_gnulib/config.h>
-#include <config.h.in>
+#ifdef WIN32
 #include <config.h>
+#endif /* WIN32 */
 
 
 #if !defined(__GNUC__) || !__GNUC__

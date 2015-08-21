@@ -26,9 +26,9 @@
  *   Max Henkel <henkel at gmx.at>
  **/
 
-#include </home/kele/build_gnulib/config.h>
-#include <config.h.in>
+#ifdef WIN32
 #include <config.h>
+#endif /* WIN32 */
 
 #include "collectd.h"
 
