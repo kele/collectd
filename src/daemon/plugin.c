@@ -26,6 +26,7 @@
  **/
 
 #ifdef WIN32
+#include <gnulib_config.h>
 #include <config.h>
 #include <sys/stat.h>
 #endif

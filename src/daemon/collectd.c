@@ -26,6 +26,7 @@
  **/
 
 #ifdef _WIN32
+#include <gnulib_config.h>
 #include <config.h>
 #endif /* _WIN32 */
 

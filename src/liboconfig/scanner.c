@@ -661,6 +661,7 @@ static void ml_append (char *);
  * The user has a chance to override it with an option.
  */
 #ifdef WIN32
+#include <gnulib_config.h>
 #include <config.h>
 #endif /* WIN32 */
 

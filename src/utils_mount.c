@@ -22,6 +22,7 @@
 **/
 
 #ifdef WIN32
+#include <gnulib_config.h>
 #include <config.h>
 #endif /* WIN32 */
 

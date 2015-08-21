@@ -28,6 +28,7 @@
 **/
 
 #if HAVE_CONFIG_H
+#include <gnulib_config.h>
 #include "config.h"
 #endif
 
