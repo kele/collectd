@@ -1,7 +1,7 @@
 
 SRC_DIR=`pwd`
 
-export LIBS="-lws2_32"
+export LIBS="-lws2_32 -lpthread"
 
 mkdir __build_gnulib
 cd __build_gnulib
@@ -25,9 +25,15 @@ set -x
     sys_stat \
     fcntl-h \
     sys_resource \
-    sys_wait 
+    sys_wait \
+    setlocale
 cd ${SRC_DIR}/__build_gnulib/_build
-./configure
-make
-make install
-#echo "Run: ./configure && make && make install"
+./configure --host=mingw32
+make 
+cd gllib
+
+# We have to rebuild libnug.a to get the list of *.o files to build a dll later
+rm libgnu.a
+OBJECT_LIST=`make V=1 | grep "ar" | cut -d' ' -f4-`
+$CXX -shared -o libgnu.dll $OBJECT_LIST -lws2_32 -lpthread
+rm libgnu.a # get rid of it, to use libgnu.dll
