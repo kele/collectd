@@ -26,7 +26,8 @@ set -x
     fcntl-h \
     sys_resource \
     sys_wait \
-    setlocale
+    setlocale \
+    strtok_r
 cd ${SRC_DIR}/__build_gnulib/_build
 ./configure --host=mingw32
 make 

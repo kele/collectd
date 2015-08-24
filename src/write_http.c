@@ -370,8 +370,13 @@ static int wh_write_command (const data_set_t *ds, const value_list_t *vl, /* {{
                         CDTIME_T_TO_DOUBLE (vl->interval),
                         values);
         if (command_len >= sizeof (command)) {
+#ifdef WIN32
+                ERROR ("write_http plugin: Command buffer too small: "
+                                "Need %I64u bytes.", command_len + 1);
+#else
                 ERROR ("write_http plugin: Command buffer too small: "
                                 "Need %zu bytes.", command_len + 1);
+#endif
                 return (-1);
         }
 
@@ -653,7 +658,11 @@ static int wh_config_node (oconfig_item_t *ci) /* {{{ */
         cb->send_buffer = malloc (cb->send_buffer_size);
         if (cb->send_buffer == NULL)
         {
+#ifdef WIN32
+                ERROR ("write_http plugin: malloc(%I64u) failed.", cb->send_buffer_size);
+#else
                 ERROR ("write_http plugin: malloc(%zu) failed.", cb->send_buffer_size);
+#endif
                 wh_callback_free (cb);
                 return (-1);
         }

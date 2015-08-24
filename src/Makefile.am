@@ -1218,7 +1218,7 @@ write_http_la_SOURCES = write_http.c \
 			utils_format_json.c utils_format_json.h
 write_http_la_LDFLAGS = $(PLUGIN_LDFLAGS)
 write_http_la_CFLAGS = $(AM_CFLAGS)
-write_http_la_LIBADD =
+write_http_la_LIBADD = -lgnu daemon/libcollectd.la
 if BUILD_WITH_LIBCURL
 write_http_la_CFLAGS += $(BUILD_WITH_LIBCURL_CFLAGS)
 write_http_la_LIBADD += $(BUILD_WITH_LIBCURL_LIBS)
