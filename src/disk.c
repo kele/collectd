@@ -20,7 +20,6 @@
  *   Florian octo Forster <octo at collectd.org>
  *   Manuel Sanmartin
  **/
-
 #include "collectd.h"
 #include "common.h"
 #include "plugin.h"
@@ -123,6 +122,8 @@ static perfstat_disk_t * stat_disk;
 static int numdisk;
 static int pnumdisk;
 /* #endif HAVE_PERFSTAT */
+
+#elif WIN32
 
 #else
 # error "No applicable input method."
@@ -391,6 +392,10 @@ static signed long long dict_get_value (CFDictionaryRef dict, const char *key)
 
 static int disk_read (void)
 {
+#ifdef WIN32
+    disk_submit ("wat", "disk_octets", 1337, 666);
+#else
+
 #if HAVE_IOKIT_IOKITLIB_H
 	io_registry_entry_t	disk;
 	io_registry_entry_t	disk_child;
@@ -874,6 +879,7 @@ static int disk_read (void)
 	}
 #endif /* defined(HAVE_PERFSTAT) */
 
+#endif /* WIN32 */
 	return (0);
 } /* int disk_read */
 

@@ -25,6 +25,9 @@
  *
  **/
 
+#include <gnulib_config.h>
+#include <config.h>
+
 #include "collectd.h"
 #include "common.h"
 #include "plugin.h"

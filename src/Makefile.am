@@ -301,7 +301,7 @@ disk_la_SOURCES = disk.c \
 		  utils_ignorelist.c utils_ignorelist.h
 disk_la_CFLAGS = $(AM_CFLAGS)
 disk_la_LDFLAGS = $(PLUGIN_LDFLAGS)
-disk_la_LIBADD =
+disk_la_LIBADD = -lgnu daemon/libcollectd.la
 if BUILD_WITH_LIBKSTAT
 disk_la_LIBADD += -lkstat
 endif
@@ -1239,6 +1239,7 @@ endif
 
 if BUILD_PLUGIN_WRITE_LOG
 pkglib_LTLIBRARIES += write_log.la
+write_log_la_LIBADD = -lgnu daemon/libcollectd.la
 write_log_la_SOURCES = write_log.c \
                         utils_format_graphite.c utils_format_graphite.h
 write_log_la_LDFLAGS = $(PLUGIN_LDFLAGS)

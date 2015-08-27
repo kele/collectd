@@ -16,7 +16,9 @@ export CURL_DIR='/home/kele/curl-7.40.0-devel-mingw64'
     LIBS="-lgnu" \
     --host="mingw32" \
     --enable-logfile \
-    --enable-write_http
+    --enable-write_http \
+    --enable-write_log \
+    --enable-disk
 cp ${GNULIB_DIR}/../config.h src/gnulib_config.h
 echo "#include <config.h.in>" >> src/gnulib_config.h
 cp my_libtool libtool
