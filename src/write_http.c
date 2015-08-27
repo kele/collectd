@@ -715,7 +715,7 @@ static int wh_init (void) /* {{{ */
 {
         /* Call this while collectd is still single-threaded to avoid
          * initialization issues in libgcrypt. */
-        curl_global_init (CURL_GLOBAL_SSL);
+        curl_global_init (CURL_GLOBAL_DEFAULT);
         return (0);
 } /* }}} int wh_init */
 
