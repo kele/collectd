@@ -5278,6 +5278,7 @@ plugin_virt="no"
 plugin_vmem="no"
 plugin_vserver="no"
 plugin_wireless="no"
+plugin_wmi="yes"
 plugin_zfs_arc="no"
 plugin_zookeeper="no"
 
@@ -5737,6 +5738,7 @@ AC_PLUGIN([virt],        [$plugin_virt],       [Virtual machine statistics])
 AC_PLUGIN([vmem],        [$plugin_vmem],       [Virtual memory statistics])
 AC_PLUGIN([vserver],     [$plugin_vserver],    [Linux VServer statistics])
 AC_PLUGIN([wireless],    [$plugin_wireless],   [Wireless statistics])
+AC_PLUGIN([wmi],          [$plugin_wmi],       [WMI])
 AC_PLUGIN([write_graphite], [yes],             [Graphite / Carbon output plugin])
 AC_PLUGIN([write_http],  [$with_libcurl],      [HTTP output plugin])
 AC_PLUGIN([write_gcm],   [$plugin_write_gcm],  [Google cloud monitoring output plugin])
@@ -6118,6 +6120,7 @@ Configuration:
     vmem  . . . . . . . . $enable_vmem
     vserver . . . . . . . $enable_vserver
     wireless  . . . . . . $enable_wireless
+    wmi . . . . . . . . . $enable_wmi
     write_graphite  . . . $enable_write_graphite
     write_http  . . . . . $enable_write_http
     write_gcm   . . . . . $enable_write_gcm

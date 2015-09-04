@@ -64,7 +64,11 @@ static int gr_format_values (char *ret, size_t ret_len,
     else if (rates != NULL)
         BUFFER_ADD ("%f", rates[ds_num]);
     else if (ds->ds[ds_num].type == DS_TYPE_COUNTER)
+#ifdef WIN32
+        BUFFER_ADD ("%"PRIu64, vl->values[ds_num].counter);
+#else
         BUFFER_ADD ("%llu", vl->values[ds_num].counter);
+#endif
     else if (ds->ds[ds_num].type == DS_TYPE_DERIVE)
         BUFFER_ADD ("%"PRIi64, vl->values[ds_num].derive);
     else if (ds->ds[ds_num].type == DS_TYPE_ABSOLUTE)
@@ -235,8 +239,14 @@ int format_graphite (char *buffer, size_t buffer_size,
                 values,
                 (unsigned int) CDTIME_T_TO_TIME_T (vl->time));
         if (message_len >= sizeof (message)) {
+#ifdef WIN32
+            ERROR ("format_graphite: message buffer too small: "
+                    "Need %u bytes.", (unsigned)message_len + 1);
+#else
             ERROR ("format_graphite: message buffer too small: "
                     "Need %zu bytes.", message_len + 1);
+#endif
+
             sfree (rates);
             return (-ENOMEM);
         }

@@ -323,6 +323,15 @@ disk_la_LIBADD += -lperfstat
 endif
 endif
 
+if BUILD_PLUGIN_WMI
+pkglib_LTLIBRARIES += wmi.la
+wmi_la_SOURCES = wmi.c wmi_config.c wmi_variant_utils.c
+wmi_la_CFLAGS = $(AM_CFLAGS) 
+wmi_la_LDFLAGS = $(PLUGIN_LDFLAGS) -L.
+wmi_la_DEPENDENCIES = libwbemuuid.dll
+wmi_la_LIBADD = -loleaut32 -lole32 -lwbemuuid daemon/libcollectd.la 
+endif
+
 if BUILD_PLUGIN_DNS
 pkglib_LTLIBRARIES += dns.la
 dns_la_SOURCES = dns.c utils_dns.c utils_dns.h
@@ -1416,6 +1425,8 @@ install-exec-hook:
 	$(INSTALL) -m 0644 $(srcdir)/types.db $(DESTDIR)$(pkgdatadir)/types.db;
 	$(INSTALL) -m 0644 $(srcdir)/postgresql_default.conf \
 		$(DESTDIR)$(pkgdatadir)/postgresql_default.conf;
+	$(mkinstalldirs) $(DESTDIR)$(sbindir)
+	$(INSTALL) -m 0644 $(srcdir)/libwbemuuid.dll $(DESTDIR)$(sbindir)/libwbemuuid.dll
 
 uninstall-hook:
 	rm -f $(DESTDIR)$(pkgdatadir)/types.db;
@@ -1431,3 +1442,9 @@ test_utils_vl_lookup_SOURCES = utils_vl_lookup_test.c testing.h
 test_utils_vl_lookup_LDADD = liblookup.la daemon/libplugin_mock.la
 
 TESTS = test_utils_mount test_utils_vl_lookup
+
+
+libwbemuuid.dll:
+	touch dummy_dummy_dummy_wrapper.c
+	${CC} dummy_dummy_dummy_wrapper.c  -shared -o libwbemuuid.dll -Wl,-whole-archive -lwbemuuid -Wl,-no-whole-archive
+	rm dummy_dummy_dummy_wrapper.c
