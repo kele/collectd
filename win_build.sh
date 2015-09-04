@@ -20,7 +20,8 @@ export CFLAGS="-Drestrict=__restrict -I${CURL_DIR}/include -I${GNULIB_DIR}"
     --host="mingw32" \
     --enable-logfile \
     --enable-write_http \
-    --enable-write_log
+    --enable-write_log \
+    --enable-wmi
 
 cp ${GNULIB_DIR}/../config.h src/gnulib_config.h
 echo "#include <config.h.in>" >> src/gnulib_config.h

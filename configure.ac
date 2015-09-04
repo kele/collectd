@@ -42,7 +42,6 @@ AC_PROG_LN_S
 AC_PROG_MAKE_SET
 AM_PROG_CC_C_O
 AM_CONDITIONAL(COMPILER_IS_GCC, test "x$GCC" = "xyes")
-AM_CONDITIONAL(COMPILING_ON_WIN32, test "x$OS" = "xWindows_NT")
 
 AC_DISABLE_STATIC
 AC_PROG_LIBTOOL
@@ -89,6 +88,10 @@ case $host_os in
 	*)
 	ac_system="unknown"
 esac
+if test "x$OS" = "xWindows_NT"
+then
+	ac_system="Windows_NT"
+fi
 AC_MSG_RESULT([$ac_system])
 
 AM_CONDITIONAL([BUILD_LINUX],[test "x$x$ac_system" = "xLinux"])
@@ -97,6 +100,7 @@ AM_CONDITIONAL([BUILD_DARWIN],[test "x$x$ac_system" = "xDarwin"])
 AM_CONDITIONAL([BUILD_OPENBSD],[test "x$x$ac_system" = "xOpenBSD"])
 AM_CONDITIONAL([BUILD_AIX],[test "x$x$ac_system" = "xAIX"])
 AM_CONDITIONAL([BUILD_FREEBSD],[test "x$x$ac_system" = "xFreeBSD"])
+AM_CONDITIONAL([COMPILING_ON_WIN32],[test "x$x$ac_system" = "xWindows_NT"])
 
 if test "x$ac_system" = "xLinux"
 then
@@ -5331,6 +5335,12 @@ then
 	fi
 fi
 
+# Windows
+if test "x$ac_system" = "xWindows_NT"
+then
+	plugin_wmi="yes"
+fi
+
 if test "x$ac_system" = "xOpenBSD"
 then
 	plugin_tcpconns="yes"
@@ -5744,6 +5754,7 @@ AC_PLUGIN([virt],        [$plugin_virt],       [Virtual machine statistics])
 AC_PLUGIN([vmem],        [$plugin_vmem],       [Virtual memory statistics])
 AC_PLUGIN([vserver],     [$plugin_vserver],    [Linux VServer statistics])
 AC_PLUGIN([wireless],    [$plugin_wireless],   [Wireless statistics])
+AC_PLUGIN([wmi],         [$plugin_wmi],        [WMI])
 AC_PLUGIN([write_graphite], [yes],             [Graphite / Carbon output plugin])
 AC_PLUGIN([write_http],  [$with_libcurl],      [HTTP output plugin])
 AC_PLUGIN([write_gcm],   [$plugin_write_gcm],  [Google cloud monitoring output plugin])
@@ -6125,6 +6136,7 @@ Configuration:
     vmem  . . . . . . . . $enable_vmem
     vserver . . . . . . . $enable_vserver
     wireless  . . . . . . $enable_wireless
+    wmi . . . . . . . . . $enable_wmi
     write_graphite  . . . $enable_write_graphite
     write_http  . . . . . $enable_write_http
     write_gcm   . . . . . $enable_write_gcm
