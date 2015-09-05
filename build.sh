@@ -55,5 +55,6 @@ set -x
 autoheader \
 && aclocal \
 && $libtoolize --ltdl --copy --force \
+&& cp ./my_new_ltmain.sh libltdl/config/ltmain.sh \
 && automake --add-missing --copy \
 && autoconf

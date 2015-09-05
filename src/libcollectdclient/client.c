@@ -24,9 +24,11 @@
  *   Florian octo Forster <octo at collectd.org>
  **/
 
-#if HAVE_CONFIG_H
-# include "config.h"
-#endif
+#ifdef WIN32
+#include <gnulib_config.h>
+#include <config.h>
+#endif /* WIN32 */
+
 
 #if !defined(__GNUC__) || !__GNUC__
 # define __attribute__(x) /**/
@@ -38,8 +40,12 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/un.h>
+#ifdef WIN32
+  #include <winsock2.h>
+#else
+  #include <sys/socket.h>
+  #include <sys/un.h>
+#endif
 #include <string.h>
 #include <assert.h>
 #include <errno.h>
@@ -381,6 +387,9 @@ static int lcc_sendreceive (lcc_connection_t *c, /* {{{ */
 
 static int lcc_open_unixsocket (lcc_connection_t *c, const char *path) /* {{{ */
 {
+#ifdef WIN32
+  return (-1);
+#else
   struct sockaddr_un sa;
   int fd;
   int status;
@@ -419,6 +428,7 @@ static int lcc_open_unixsocket (lcc_connection_t *c, const char *path) /* {{{ */
   }
 
   return (0);
+#endif
 } /* }}} int lcc_open_unixsocket */
 
 static int lcc_open_netsocket (lcc_connection_t *c, /* {{{ */

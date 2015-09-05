@@ -21,8 +21,9 @@
  *   Sebastian "tokkee" Harl <sh@tokkee.org>
  **/
 
-#if HAVE_CONFIG_H
-# include "config.h"
+#ifdef _WIN32
+#include <gnulib_config.h>
+#include <config.h>
 #endif
 
 #include <stdlib.h>
@@ -68,6 +69,9 @@
 #include "libcollectdclient/collectd/client.h"
 
 #define DEFAULT_SOCK LOCALSTATEDIR"/run/"PACKAGE_NAME"-unixsock"
+
+#undef gethostname
+#include <Winsock2.h>
 
 extern char *optarg;
 extern int   optind;

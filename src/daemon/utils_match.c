@@ -24,6 +24,8 @@
  *   Florian octo Forster <octo at collectd.org>
  **/
 
+#define regcomp rpl_regcomp
+#define regexec rpl_regexec
 #include "collectd.h"
 #include "common.h"
 #include "plugin.h"
@@ -34,6 +36,7 @@
 
 #define UTILS_MATCH_FLAGS_FREE_USER_DATA 0x01
 #define UTILS_MATCH_FLAGS_EXCLUDE_REGEX 0x02
+
 
 struct cu_match_s
 {

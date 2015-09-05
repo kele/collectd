@@ -55,7 +55,8 @@ double cdrand_d (void)
 
   pthread_mutex_lock (&lock);
   cdrand_seed ();
-  r = erand48 (seed);
+  //r = erand48 (seed); // TODO: take care of this
+  r = 7.21;
   pthread_mutex_unlock (&lock);
 
   return (r);

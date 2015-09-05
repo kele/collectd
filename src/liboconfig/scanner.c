@@ -660,6 +660,11 @@ static void ml_append (char *);
  * down here because we want the user's section 1 to have been scanned first.
  * The user has a chance to override it with an option.
  */
+#ifdef WIN32
+#include <gnulib_config.h>
+#include <config.h>
+#endif /* WIN32 */
+
 #include <unistd.h>
 #endif
 

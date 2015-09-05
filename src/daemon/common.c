@@ -28,7 +28,12 @@
 **/
 
 #if HAVE_CONFIG_H
-# include "config.h"
+#include <gnulib_config.h>
+#include "config.h"
+#endif
+
+#ifdef WIN32
+#include <sys/stat.h>
 #endif
 
 #include "collectd.h"
@@ -43,6 +48,8 @@
 #ifdef HAVE_MATH_H
 # include <math.h>
 #endif
+
+#include <unistd.h>
 
 /* for getaddrinfo */
 #include <sys/types.h>
@@ -981,11 +988,23 @@ int format_values (char *ret, size_t ret_len, /* {{{ */
                         BUFFER_ADD (":"GAUGE_FORMAT, rates[i]);
                 }
                 else if (ds->ds[i].type == DS_TYPE_COUNTER)
+#ifdef WIN32
+                        BUFFER_ADD (":%I64u", vl->values[i].counter);
+#else
                         BUFFER_ADD (":%llu", vl->values[i].counter);
+#endif
                 else if (ds->ds[i].type == DS_TYPE_DERIVE)
+#ifdef WIN32
+                        BUFFER_ADD (":%I64i", vl->values[i].derive);
+#else
                         BUFFER_ADD (":%"PRIi64, vl->values[i].derive);
+#endif
                 else if (ds->ds[i].type == DS_TYPE_ABSOLUTE)
+#ifdef WIN32
+                        BUFFER_ADD (":%I64u", vl->values[i].absolute);
+#else
                         BUFFER_ADD (":%"PRIu64, vl->values[i].absolute);
+#endif
                 else
                 {
                         ERROR ("format_values: Unknown data source type: %i",
@@ -1201,6 +1220,12 @@ int parse_values (char *buffer, value_list_t *vl, const data_set_t *ds)
 int getpwnam_r (const char *name, struct passwd *pwbuf, char *buf,
 		size_t buflen, struct passwd **pwbufp)
 {
+    /* Just to keep the build going. */
+#ifdef WIN32
+	pthread_mutex_lock (&getpwnam_r_lock);
+	pthread_mutex_unlock (&getpwnam_r_lock);
+    return (0);
+#else
 	int status = 0;
 	struct passwd *pw;
 
@@ -1247,6 +1272,7 @@ int getpwnam_r (const char *name, struct passwd *pwbuf, char *buf,
 	pthread_mutex_unlock (&getpwnam_r_lock);
 
 	return (status);
+#endif
 } /* int getpwnam_r */
 #endif /* !HAVE_GETPWNAM_R */
 

@@ -25,6 +25,12 @@
  *   Sebastian Harl <sh at tokkee.org>
  **/
 
+#ifdef WIN32
+#include <gnulib_config.h>
+#include <config.h>
+#include <sys/stat.h>
+#endif
+
 #include "collectd.h"
 #include "common.h"
 #include "plugin.h"
@@ -39,6 +45,8 @@
 #include "utils_random.h"
 
 #include <ltdl.h>
+
+#include <unistd.h>
 
 /*
  * Private structures
@@ -885,7 +893,11 @@ static void stop_write_threads (void) /* {{{ */
 	if (write_threads == NULL)
 		return;
 
+#ifdef WIN32
+	INFO ("collectd: Stopping %u write threads.", (unsigned)write_threads_num);
+#else
 	INFO ("collectd: Stopping %zu write threads.", write_threads_num);
+#endif
 
 	pthread_mutex_lock (&write_lock);
 	write_loop = 0;
@@ -1026,7 +1038,7 @@ int plugin_load (char const *plugin_name, uint32_t flags)
 
 	/* `cpu' should not match `cpufreq'. To solve this we add `.so' to the
 	 * type when matching the filename */
-	status = ssnprintf (typename, sizeof (typename), "%s.so", plugin_name);
+	status = ssnprintf (typename, sizeof (typename), "%s.la", plugin_name);
 	if ((status < 0) || ((size_t) status >= sizeof (typename)))
 	{
 		WARNING ("plugin_load: Filename too long: \"%s.so\"", plugin_name);
