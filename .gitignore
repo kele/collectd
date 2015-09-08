@@ -79,3 +79,6 @@ src/daemon/collectd
 /src/libcollectdclient/Makefile.in
 /src/liboconfig/Makefile.in
 /libltdl
+
+# configure stuff
+/src/libmongoc/src/.deps
