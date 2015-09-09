@@ -41,39 +41,53 @@ AUTOMAKE_OPTIONS = subdir-objects
 
 sbin_PROGRAMS = collectd
 
-noinst_LTLIBRARIES = libavltree.la libcommon.la libheap.la libplugin_mock.la
+lib_LTLIBRARIES = libcollectd.la
+noinst_LTLIBRARIES = libplugin_mock.la
 
-libavltree_la_SOURCES = utils_avltree.c utils_avltree.h
-
-libcommon_la_SOURCES = common.c common.h
-
-libheap_la_SOURCES = utils_heap.c utils_heap.h
 
 libplugin_mock_la_SOURCES = plugin_mock.c utils_cache_mock.c utils_time_mock.c
 
-collectd_SOURCES = collectd.c collectd.h \
-		   configfile.c configfile.h \
-		   filter_chain.c filter_chain.h \
-		   meta_data.c meta_data.h \
-		   plugin.c plugin.h \
-		   utils_cache.c utils_cache.h \
-		   utils_complain.c utils_complain.h \
-		   utils_llist.c utils_llist.h \
-		   utils_random.c utils_random.h \
-		   utils_tail_match.c utils_tail_match.h \
-		   utils_match.c utils_match.h \
-		   utils_subst.c utils_subst.h \
-		   utils_tail.c utils_tail.h \
-		   utils_time.c utils_time.h \
-		   types_list.c types_list.h \
-		   utils_threshold.c utils_threshold.h
+
+libcollectd_la_SOURCES =  \
+			common.c common.h \
+			utils_heap.c utils_heap.h \
+			utils_avltree.c utils_avltree.h \
+			configfile.c configfile.h \
+			filter_chain.c filter_chain.h \
+			globals.c globals.h \
+			meta_data.c meta_data.h \
+			plugin.c plugin.h \
+			utils_cache.c utils_cache.h \
+			utils_complain.c utils_complain.h \
+			utils_llist.c utils_llist.h \
+			utils_random.c utils_random.h \
+			utils_tail_match.c utils_tail_match.h \
+			utils_match.c utils_match.h \
+			utils_subst.c utils_subst.h \
+			utils_tail.c utils_tail.h \
+			utils_time.c utils_time.h \
+			types_list.c types_list.h \
+			utils_threshold.c utils_threshold.h
+libcollectd_la_CPPFLAGS = $(AM_CPPFLAGS) $(LTDLINCL)
+libcollectd_la_CFLAGS = $(AM_CFLAGS)
+libcollectd_la_LDFLAGS = $(COMMON_LDFLAGS)
+libcollectd_la_LIBADD = -lm $(COMMON_LIBS) -lltdl
+libcollectd_la_DEPENDENCIES =
+
+if BUILD_WITH_OWN_LIBOCONFIG
+libcollectd_la_LIBADD += $(top_builddir)/src/liboconfig/liboconfig.la
+libcollectd_la_DEPENDENCIES += $(top_builddir)/src/liboconfig/liboconfig.la
+else
+libcollectd_la_LIBADD += -loconfig
+endif
 
 
+collectd_SOURCES = collectd.c collectd.h
 collectd_CPPFLAGS =  $(AM_CPPFLAGS) $(LTDLINCL)
 collectd_CFLAGS = $(AM_CFLAGS)
 collectd_LDFLAGS = -export-dynamic
-collectd_LDADD = libavltree.la libcommon.la libheap.la -lm $(COMMON_LIBS)
-collectd_DEPENDENCIES = libavltree.la libcommon.la libheap.la
+collectd_LDADD = libcollectd.la $(COMMON_LIBS)
+collectd_DEPENDENCIES =
 
 # The daemon needs to call sg_init, so we need to link it against libstatgrab,
 # too. -octo
@@ -93,10 +107,10 @@ check_PROGRAMS = test_common test_utils_avltree test_utils_heap
 TESTS = test_common test_utils_avltree test_utils_heap
 
 test_common_SOURCES = common_test.c ../testing.h
-test_common_LDADD = libcommon.la libplugin_mock.la $(COMMON_LIBS)
+test_common_LDADD = libcollectd.la libplugin_mock.la $(COMMON_LIBS)
 
 test_utils_avltree_SOURCES = utils_avltree_test.c ../testing.h
-test_utils_avltree_LDADD = libavltree.la $(COMMON_LIBS)
+test_utils_avltree_LDADD = libcollectd.la $(COMMON_LIBS)
 
 test_utils_heap_SOURCES = utils_heap_test.c ../testing.h
-test_utils_heap_LDADD = libheap.la $(COMMON_LIBS)
+test_utils_heap_LDADD = libcollectd.la $(COMMON_LIBS)
