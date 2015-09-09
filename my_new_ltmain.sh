@@ -5525,10 +5525,6 @@ func_emit_cwrapperexe_src ()
 */
 EOF
 	    cat <<"EOF"
-#include </home/kele/build_gnulib/config.h>
-#include <config.h.in>
-#include <config.h>
-
 #ifdef _MSC_VER
 # define _CRT_SECURE_NO_DEPRECATE 1
 #endif
