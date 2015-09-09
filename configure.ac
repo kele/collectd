@@ -44,7 +44,6 @@ AM_PROG_CC_C_O
 AM_CONDITIONAL(COMPILER_IS_GCC, test "x$GCC" = "xyes")
 
 AC_DISABLE_STATIC
-AC_LIBTOOL_WIN32_DLL
 AC_PROG_LIBTOOL
 AC_PROG_LEX
 AC_PROG_YACC
@@ -163,7 +162,7 @@ AC_HEADER_SYS_WAIT
 AC_HEADER_DIRENT
 AC_HEADER_STDBOOL
 
-AC_CHECK_HEADERS(stdio.h errno.h math.h stdarg.h syslog.h fcntl.h signal.h assert.h sys/types.h sys/select.h poll.h netdb.h arpa/inet.h sys/resource.h sys/param.h kstat.h regex.h sys/ioctl.h endian.h sys/isa_defs.h fnmatch.h libgen.h)
+AC_CHECK_HEADERS(stdio.h errno.h math.h stdarg.h syslog.h fcntl.h signal.h assert.h sys/types.h sys/socket.h sys/select.h poll.h netdb.h arpa/inet.h sys/resource.h sys/param.h kstat.h regex.h sys/ioctl.h endian.h sys/isa_defs.h fnmatch.h libgen.h)
 
 # For ping library
 AC_CHECK_HEADERS(netinet/in_systm.h, [], [],
@@ -735,8 +734,14 @@ fi
 
 AC_CHECK_FUNCS(getpwnam_r getgrnam_r setgroups regcomp regerror regexec regfree)
 
-socket_needs_socket="yes"
+socket_needs_socket="no"
+socket_needs_gnulib="no"
+AC_CHECK_FUNCS(socket, [],
+               AC_CHECK_LIB(socket, socket, [socket_needs_socket="yes"],
+                            AC_CHECK_LIB(gnu, rpl_socket, [socket_needs_gnulib="yes"],
+                                         AC_MSG_ERROR(cannot find socket))))
 AM_CONDITIONAL(BUILD_WITH_LIBSOCKET, test "x$socket_needs_socket" = "xyes")
+AM_CONDITIONAL(BUILD_WITH_GNULIB, test "x$socket_needs_gnulib" = "xyes")
 
 clock_gettime_needs_rt="no"
 clock_gettime_needs_posix4="no"
