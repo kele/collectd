@@ -26,10 +26,10 @@ AUTOMAKE_OPTIONS = subdir-objects
 noinst_LTLIBRARIES = libmount.la liblookup.la
 
 libmount_la_SOURCES = utils_mount.c utils_mount.h
-libmount_la_LIBADD = daemon/libcommon.la
+libmount_la_LIBADD = daemon/libcollectd.la
 
 liblookup_la_SOURCES = utils_vl_lookup.c utils_vl_lookup.h
-liblookup_la_LIBADD = daemon/libavltree.la daemon/libcommon.la
+liblookup_la_LIBADD = daemon/libcollectd.la
 
 sbin_PROGRAMS = collectdmon
 bin_PROGRAMS = collectd-nagios collectdctl collectd-tg
@@ -65,7 +65,7 @@ collectdctl_DEPENDENCIES = libcollectdclient/libcollectdclient.la
 
 collectd_tg_SOURCES = collectd-tg.c
 collectd_tg_CPPFLAGS = $(AM_CPPFLAGS) -I$(top_srcdir)/src/libcollectdclient/collectd -I$(top_builddir)/src/libcollectdclient/collectd
-collectd_tg_LDADD = daemon/libheap.la
+collectd_tg_LDADD = daemon/libcollectd.la
 if BUILD_WITH_LIBSOCKET
 collectd_tg_LDADD += -lsocket
 endif
@@ -486,6 +486,7 @@ endif # BUILD_PLUGIN_LOAD
 if BUILD_PLUGIN_LOGFILE
 pkglib_LTLIBRARIES += logfile.la
 logfile_la_SOURCES = logfile.c
+logfile_la_LIBADD = daemon/libcollectd.la
 logfile_la_LDFLAGS = $(PLUGIN_LDFLAGS)
 endif
 
@@ -1238,6 +1239,7 @@ endif
 
 if BUILD_PLUGIN_WRITE_LOG
 pkglib_LTLIBRARIES += write_log.la
+write_log_la_LIBADD =
 write_log_la_SOURCES = write_log.c \
                         utils_format_graphite.c utils_format_graphite.h
 write_log_la_LDFLAGS = $(PLUGIN_LDFLAGS)
