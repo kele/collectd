@@ -5,6 +5,9 @@ endif
 SUBDIRS += daemon
 
 PLUGIN_LDFLAGS = -module -avoid-version -export-symbols-regex '\<module_register\>'
+if COMPILING_ON_WIN32
+PLUGIN_LDFLAGS += -shared -no-undefined
+endif
 
 if COMPILER_IS_GCC
 AM_CFLAGS = -Wall -Werror
@@ -31,8 +34,13 @@ libmount_la_LIBADD = daemon/libcollectd.la
 liblookup_la_SOURCES = utils_vl_lookup.c utils_vl_lookup.h
 liblookup_la_LIBADD = daemon/libcollectd.la
 
+if COMPILING_ON_WIN32
+sbin_PROGRAMS =
+bin_PROGRAMS =
+else
 sbin_PROGRAMS = collectdmon
 bin_PROGRAMS = collectd-nagios collectdctl collectd-tg
+endif
 
 collectdmon_SOURCES = collectdmon.c
 collectdmon_CPPFLAGS = $(AM_CPPFLAGS)
@@ -42,6 +50,9 @@ collectd_nagios_CPPFLAGS = $(AM_CPPFLAGS) -I$(top_srcdir)/src/libcollectdclient/
 collectd_nagios_LDADD =
 if BUILD_WITH_LIBSOCKET
 collectd_nagios_LDADD += -lsocket
+endif
+if BUILD_WITH_GNULIB
+collectd_nagios_LDADD += -lgnu
 endif
 if BUILD_AIX
 collectd_nagios_LDADD += -lm
@@ -57,6 +68,9 @@ collectdctl_LDADD =
 if BUILD_WITH_LIBSOCKET
 collectdctl_LDADD += -lsocket
 endif
+if BUILD_WITH_GNULIB
+collectdctl_LDADD += -lgnu
+endif
 if BUILD_AIX
 collectdctl_LDADD += -lm
 endif
@@ -68,6 +82,9 @@ collectd_tg_CPPFLAGS = $(AM_CPPFLAGS) -I$(top_srcdir)/src/libcollectdclient/coll
 collectd_tg_LDADD = daemon/libcollectd.la
 if BUILD_WITH_LIBSOCKET
 collectd_tg_LDADD += -lsocket
+endif
+if BUILD_WITH_GNULIB
+collectd_tg_LDADD += -lgnu
 endif
 if BUILD_WITH_LIBRT
 collectd_tg_LDADD += -lrt
@@ -125,6 +142,9 @@ apcups_la_LDFLAGS = $(PLUGIN_LDFLAGS)
 apcups_la_LIBADD =
 if BUILD_WITH_LIBSOCKET
 apcups_la_LIBADD += -lsocket
+endif
+if BUILD_WITH_GNULIB
+apcups_la_LIBADD += -lgnu
 endif
 endif
 
@@ -394,6 +414,9 @@ hddtemp_la_LIBADD =
 if BUILD_WITH_LIBSOCKET
 hddtemp_la_LIBADD += -lsocket
 endif
+if BUILD_WITH_GNULIB
+hddtemp_la_LIBADD += -lgnu
+endif
 endif
 
 if BUILD_PLUGIN_INTERFACE
@@ -558,6 +581,9 @@ mbmon_la_LIBADD =
 if BUILD_WITH_LIBSOCKET
 mbmon_la_LIBADD += -lsocket
 endif
+if BUILD_WITH_GNULIB
+mbmon_la_LIBADD += -lgnu
+endif
 endif
 
 if BUILD_PLUGIN_MD
@@ -582,6 +608,9 @@ memcached_la_LDFLAGS = $(PLUGIN_LDFLAGS)
 memcached_la_LIBADD =
 if BUILD_WITH_LIBSOCKET
 memcached_la_LIBADD += -lsocket
+endif
+if BUILD_WITH_GNULIB
+memcached_la_LIBADD += -lgnu
 endif
 endif
 
@@ -685,6 +714,9 @@ network_la_LIBADD = -lpthread
 if BUILD_WITH_LIBSOCKET
 network_la_LIBADD += -lsocket
 endif
+if BUILD_WITH_GNULIB
+network_la_LIBADD += -lgnu
+endif
 if BUILD_WITH_LIBGCRYPT
 network_la_CPPFLAGS += $(GCRYPT_CPPFLAGS)
 network_la_LDFLAGS += $(GCRYPT_LDFLAGS)
@@ -739,6 +771,9 @@ ntpd_la_LIBADD =
 if BUILD_WITH_LIBSOCKET
 ntpd_la_LIBADD += -lsocket
 endif
+if BUILD_WITH_GNULIB
+ntpd_la_LIBADD += -lgnu
+endif
 endif
 
 if BUILD_PLUGIN_NUMA
@@ -762,6 +797,9 @@ olsrd_la_LDFLAGS = $(PLUGIN_LDFLAGS)
 olsrd_la_LIBADD =
 if BUILD_WITH_LIBSOCKET
 olsrd_la_LIBADD += -lsocket
+endif
+if BUILD_WITH_GNULIB
+olsrd_la_LIBADD += -lgnu
 endif
 endif
 
@@ -1112,6 +1150,9 @@ tokyotyrant_la_LIBADD  = $(BUILD_WITH_LIBTOKYOTYRANT_LIBS)
 if BUILD_WITH_LIBSOCKET
 tokyotyrant_la_LIBADD += -lsocket
 endif
+if BUILD_WITH_GNULIB
+tokyotyrant_la_LIBADD += -lgnu
+endif
 endif
 
 if BUILD_PLUGIN_TURBOSTAT
@@ -1218,7 +1259,10 @@ write_http_la_SOURCES = write_http.c \
 			utils_format_json.c utils_format_json.h
 write_http_la_LDFLAGS = $(PLUGIN_LDFLAGS)
 write_http_la_CFLAGS = $(AM_CFLAGS)
-write_http_la_LIBADD =
+write_http_la_LIBADD = daemon/libcollectd.la
+if BUILD_WITH_GNULIB
+write_http_la_LIBADD += -lgnu
+endif
 if BUILD_WITH_LIBCURL
 write_http_la_CFLAGS += $(BUILD_WITH_LIBCURL_CFLAGS)
 write_http_la_LIBADD += $(BUILD_WITH_LIBCURL_LIBS)
@@ -1239,7 +1283,10 @@ endif
 
 if BUILD_PLUGIN_WRITE_LOG
 pkglib_LTLIBRARIES += write_log.la
-write_log_la_LIBADD =
+write_log_la_LIBADD = daemon/libcollectd.la
+if BUILD_WITH_GNULIB
+write_log_la_LIBADD += -lgnu
+endif
 write_log_la_SOURCES = write_log.c \
                         utils_format_graphite.c utils_format_graphite.h
 write_log_la_LDFLAGS = $(PLUGIN_LDFLAGS)

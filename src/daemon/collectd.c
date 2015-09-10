@@ -25,6 +25,11 @@
  *   Alvaro Barcellos <alvaro.barcellos at gmail.com>
  **/
 
+#ifdef WIN32
+# include <gnulib_config.h>
+# include <config.h>
+#endif
+
 #include "collectd.h"
 #include "common.h"
 
@@ -33,7 +38,14 @@
 
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <sys/un.h>
+#ifndef WIN32
+# include <sys/un.h>
+#else
+# include <sys/stat.h>
+# include <unistd.h>
+# undef gethostname
+# include <Winsock2.h>
+#endif
 #include <netdb.h>
 
 #include <pthread.h>
@@ -50,9 +62,14 @@
 # define COLLECTD_LOCALE "C"
 #endif
 
+#ifdef WIN32
+# undef COLLECT_DAEMON
+#endif
 
 static int loop = 0;
 
+/* TODO: some form of controlling collectd should be present on Windows. */
+#ifndef WIN32
 static void *do_flush (void __attribute__((unused)) *arg)
 {
 	INFO ("Flushing all data.");
@@ -86,6 +103,7 @@ static void sig_usr1_handler (int __attribute__((unused)) signal)
 	pthread_create (&thread, &attr, do_flush, NULL);
 	pthread_attr_destroy (&attr);
 }
+#endif /* !WIN32 */
 
 static int init_hostname (void)
 {
@@ -570,18 +588,57 @@ int configure_collectd (struct cmdline_config *config)
 	if (init_global_variables () != 0)
 		return (1);
 
-   if (config->test_config)
-	return (0);
+        return (0);
 }
 
-int main (int argc, char **argv)
+#ifdef WIN32
+#include <windows.h>
+
+int windows_main (int argc, char **argv)
+{
+	int exit_status;
+	struct cmdline_config config;
+	int status;
+
+	memset(&config, 0, sizeof (config));
+	read_cmdline(argc, argv, &config);
+
+	plugin_init_ctx ();
+	if ((status = configure_collectd (&config)))
+		return (status);
+
+	/*
+	 * run the actual loops
+	 */
+	do_init ();
+
+	if (config.test_readall)
+	{
+		if (plugin_read_all_once () != 0)
+			exit_status = 1;
+	}
+	else
+	{
+		INFO ("Initialization complete, entering read-loop.");
+		do_loop ();
+	}
+
+	/* close syslog */
+	INFO ("Exiting normally.");
+
+	do_shutdown ();
+
+	return (exit_status);
+}
+
+#else /* ! WIN32 */
+
+int linux_main (int argc, char **argv)
 {
 	struct sigaction sig_int_action;
 	struct sigaction sig_term_action;
 	struct sigaction sig_usr1_action;
 	struct sigaction sig_pipe_action;
-	char *configfile = CONFIGFILE;
-	int test_config  = 0;
 	int test_readall = 0;
 	int status;
 #if COLLECT_DAEMON
@@ -598,10 +655,8 @@ int main (int argc, char **argv)
 	read_cmdline(argc, argv, &config);
 
 	/* TODO kele: remove this workaround */
-	test_config = config->test_config;
-	test_readall = config->test_readall;
-	daemonize = config->daemonize;
-	configfile = config->configfile;
+	test_readall = config.test_readall;
+	daemonize = config.daemonize;
 
 	if (optind < argc)
 		exit_usage (1);
@@ -609,6 +664,9 @@ int main (int argc, char **argv)
 	plugin_init_ctx ();
 	if ((status = configure_collectd (&config)))
 		return (status);
+
+	if (config.test_config)
+		return (0);
 
 #if COLLECT_DAEMON
 	/*
@@ -735,4 +793,14 @@ int main (int argc, char **argv)
 #endif /* COLLECT_DAEMON */
 
 	return (exit_status);
-} /* int main */
+} /* int linux_main */
+#endif /* WIN32 */
+
+int main(int argc, char **argv)
+{
+#ifdef WIN32
+	return (windows_main (argc, argv));
+#else
+	return (linux_main (argc, argv));
+#endif
+}
