@@ -5,6 +5,9 @@ endif
 SUBDIRS += daemon
 
 PLUGIN_LDFLAGS = -module -avoid-version -export-symbols-regex '\<module_register\>'
+if BUILD_WIN32
+PLUGIN_LDFLAGS += -shared -no-undefined
+endif
 
 if COMPILER_IS_GCC
 AM_CFLAGS = -Wall -Werror
@@ -31,8 +34,14 @@ libmount_la_LIBADD = daemon/libcollectd.la
 liblookup_la_SOURCES = utils_vl_lookup.c utils_vl_lookup.h
 liblookup_la_LIBADD = daemon/libcollectd.la
 
+if BUILD_WIN32
+# TODO: we should build these executables on Windows as well.
+sbin_PROGRAMS =
+bin_PROGRAMS =
+else
 sbin_PROGRAMS = collectdmon
 bin_PROGRAMS = collectd-nagios collectdctl collectd-tg
+endif
 
 collectdmon_SOURCES = collectdmon.c
 collectdmon_CPPFLAGS = $(AM_CPPFLAGS)
@@ -87,6 +96,11 @@ pkglib_LTLIBRARIES =
 BUILT_SOURCES =
 CLEANFILES =
 
+# TODO: Because of the way Windows linking works, every plugin that will be
+# ported to Windows will need a line like this:
+#
+# *_la_LIBADD = daemon/libcollectd.la
+
 if BUILD_PLUGIN_AGGREGATION
 pkglib_LTLIBRARIES += aggregation.la
 aggregation_la_SOURCES = aggregation.c \
@@ -125,6 +139,9 @@ apcups_la_LDFLAGS = $(PLUGIN_LDFLAGS)
 apcups_la_LIBADD =
 if BUILD_WITH_LIBSOCKET
 apcups_la_LIBADD += -lsocket
+endif
+if BUILD_WITH_GNULIB
+apcups_la_LIBADD += -lgnu
 endif
 endif
 
@@ -394,6 +411,9 @@ hddtemp_la_LIBADD =
 if BUILD_WITH_LIBSOCKET
 hddtemp_la_LIBADD += -lsocket
 endif
+if BUILD_WITH_GNULIB
+hddtemp_la_LIBADD += -lgnu
+endif
 endif
 
 if BUILD_PLUGIN_INTERFACE
@@ -535,6 +555,7 @@ endif
 if BUILD_PLUGIN_MATCH_REGEX
 pkglib_LTLIBRARIES += match_regex.la
 match_regex_la_SOURCES = match_regex.c
+match_regex_la_LIBADD = daemon/libcollectd.la
 match_regex_la_LDFLAGS = $(PLUGIN_LDFLAGS)
 endif
 
@@ -557,6 +578,9 @@ mbmon_la_LDFLAGS = $(PLUGIN_LDFLAGS)
 mbmon_la_LIBADD =
 if BUILD_WITH_LIBSOCKET
 mbmon_la_LIBADD += -lsocket
+endif
+if BUILD_WITH_GNULIB
+mbmon_la_LIBADD += -lgnu
 endif
 endif
 
@@ -582,6 +606,9 @@ memcached_la_LDFLAGS = $(PLUGIN_LDFLAGS)
 memcached_la_LIBADD =
 if BUILD_WITH_LIBSOCKET
 memcached_la_LIBADD += -lsocket
+endif
+if BUILD_WITH_GNULIB
+memcached_la_LIBADD += -lgnu
 endif
 endif
 
@@ -668,6 +695,9 @@ network_la_LIBADD = -lpthread
 if BUILD_WITH_LIBSOCKET
 network_la_LIBADD += -lsocket
 endif
+if BUILD_WITH_GNULIB
+network_la_LIBADD += -lgnu
+endif
 if BUILD_WITH_LIBGCRYPT
 network_la_CPPFLAGS += $(GCRYPT_CPPFLAGS)
 network_la_LDFLAGS += $(GCRYPT_LDFLAGS)
@@ -722,6 +752,9 @@ ntpd_la_LIBADD =
 if BUILD_WITH_LIBSOCKET
 ntpd_la_LIBADD += -lsocket
 endif
+if BUILD_WITH_GNULIB
+ntpd_la_LIBADD += -lgnu
+endif
 endif
 
 if BUILD_PLUGIN_NUMA
@@ -745,6 +778,9 @@ olsrd_la_LDFLAGS = $(PLUGIN_LDFLAGS)
 olsrd_la_LIBADD =
 if BUILD_WITH_LIBSOCKET
 olsrd_la_LIBADD += -lsocket
+endif
+if BUILD_WITH_GNULIB
+olsrd_la_LIBADD += -lgnu
 endif
 endif
 
@@ -1023,6 +1059,7 @@ endif
 if BUILD_PLUGIN_TARGET_REPLACE
 pkglib_LTLIBRARIES += target_replace.la
 target_replace_la_SOURCES = target_replace.c
+target_replace_la_LIBADD = daemon/libcollectd.la
 target_replace_la_LDFLAGS = $(PLUGIN_LDFLAGS)
 endif
 
@@ -1035,6 +1072,7 @@ endif
 if BUILD_PLUGIN_TARGET_SET
 pkglib_LTLIBRARIES += target_set.la
 target_set_la_SOURCES = target_set.c
+target_set_la_LIBADD = daemon/libcollectd.la
 target_set_la_LDFLAGS = $(PLUGIN_LDFLAGS)
 endif
 
@@ -1087,6 +1125,9 @@ tokyotyrant_la_LDFLAGS = $(PLUGIN_LDFLAGS) $(BUILD_WITH_LIBTOKYOTYRANT_LDFLAGS)
 tokyotyrant_la_LIBADD  = $(BUILD_WITH_LIBTOKYOTYRANT_LIBS)
 if BUILD_WITH_LIBSOCKET
 tokyotyrant_la_LIBADD += -lsocket
+endif
+if BUILD_WITH_GNULIB
+tokyotyrant_la_LIBADD += -lgnu
 endif
 endif
 
@@ -1194,7 +1235,10 @@ write_http_la_SOURCES = write_http.c \
 			utils_format_json.c utils_format_json.h
 write_http_la_LDFLAGS = $(PLUGIN_LDFLAGS)
 write_http_la_CFLAGS = $(AM_CFLAGS)
-write_http_la_LIBADD =
+write_http_la_LIBADD = daemon/libcollectd.la
+if BUILD_WITH_GNULIB
+write_http_la_LIBADD += -lgnu
+endif
 if BUILD_WITH_LIBCURL
 write_http_la_CFLAGS += $(BUILD_WITH_LIBCURL_CFLAGS)
 write_http_la_LIBADD += $(BUILD_WITH_LIBCURL_LIBS)
@@ -1215,7 +1259,10 @@ endif
 
 if BUILD_PLUGIN_WRITE_LOG
 pkglib_LTLIBRARIES += write_log.la
-write_log_la_LIBADD =
+write_log_la_LIBADD = daemon/libcollectd.la
+if BUILD_WITH_GNULIB
+write_log_la_LIBADD += -lgnu
+endif
 write_log_la_SOURCES = write_log.c \
                         utils_format_graphite.c utils_format_graphite.h
 write_log_la_LDFLAGS = $(PLUGIN_LDFLAGS)
