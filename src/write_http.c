@@ -210,10 +210,17 @@ static int wh_flush_nolock (cdtime_t timeout, wh_callback_t *cb) /* {{{ */
 {
         int status;
 
+#ifdef WIN32
+        DEBUG ("write_http plugin: wh_flush_nolock: timeout = %.3f; "
+                        "send_buffer_fill = %u;",
+                        CDTIME_T_TO_DOUBLE (timeout),
+                        (unsigned)cb->send_buffer_fill);
+#else
         DEBUG ("write_http plugin: wh_flush_nolock: timeout = %.3f; "
                         "send_buffer_fill = %zu;",
                         CDTIME_T_TO_DOUBLE (timeout),
                         cb->send_buffer_fill);
+#endif /* WIN32 */
 
         /* timeout == 0  => flush unconditionally */
         if (timeout > 0)
@@ -370,8 +377,13 @@ static int wh_write_command (const data_set_t *ds, const value_list_t *vl, /* {{
                         CDTIME_T_TO_DOUBLE (vl->interval),
                         values);
         if (command_len >= sizeof (command)) {
+#ifdef WIN32
+                ERROR ("write_http plugin: Command buffer too small: "
+                                "Need %u bytes.", (unsigned)command_len + 1);
+#else
                 ERROR ("write_http plugin: Command buffer too small: "
                                 "Need %zu bytes.", command_len + 1);
+#endif
                 return (-1);
         }
 
@@ -406,11 +418,20 @@ static int wh_write_command (const data_set_t *ds, const value_list_t *vl, /* {{
         cb->send_buffer_fill += command_len;
         cb->send_buffer_free -= command_len;
 
+#ifdef WIN32
+
+        DEBUG ("write_http plugin: <%s> buffer %u/%u (%g%%) \"%s\"",
+                        cb->location,
+                        (unsigned)cb->send_buffer_fill, (unsigned)cb->send_buffer_size,
+                        100.0 * ((double) cb->send_buffer_fill) / ((double) cb->send_buffer_size),
+                        command);
+#else
         DEBUG ("write_http plugin: <%s> buffer %zu/%zu (%g%%) \"%s\"",
                         cb->location,
                         cb->send_buffer_fill, cb->send_buffer_size,
                         100.0 * ((double) cb->send_buffer_fill) / ((double) cb->send_buffer_size),
                         command);
+#endif /* WIN32 */
 
         /* Check if we have enough space for this command. */
         pthread_mutex_unlock (&cb->send_lock);
@@ -461,10 +482,17 @@ static int wh_write_json (const data_set_t *ds, const value_list_t *vl, /* {{{ *
                 return (status);
         }
 
+#ifdef WIN32
+        DEBUG ("write_http plugin: <%s> buffer %u/%u (%g%%)",
+                        cb->location,
+                        (unsigned)cb->send_buffer_fill, (unsigned)cb->send_buffer_size,
+                        100.0 * ((double) cb->send_buffer_fill) / ((double) cb->send_buffer_size));
+#else
         DEBUG ("write_http plugin: <%s> buffer %zu/%zu (%g%%)",
                         cb->location,
                         cb->send_buffer_fill, cb->send_buffer_size,
                         100.0 * ((double) cb->send_buffer_fill) / ((double) cb->send_buffer_size));
+#endif /* WIN32 */
 
         /* Check if we have enough space for this command. */
         pthread_mutex_unlock (&cb->send_lock);
@@ -653,7 +681,11 @@ static int wh_config_node (oconfig_item_t *ci) /* {{{ */
         cb->send_buffer = malloc (cb->send_buffer_size);
         if (cb->send_buffer == NULL)
         {
+#ifdef WIN32
+                ERROR ("write_http plugin: malloc(%u) failed.", (unsigned)cb->send_buffer_size);
+#else
                 ERROR ("write_http plugin: malloc(%zu) failed.", cb->send_buffer_size);
+#endif
                 wh_callback_free (cb);
                 return (-1);
         }
@@ -706,7 +738,11 @@ static int wh_init (void) /* {{{ */
 {
         /* Call this while collectd is still single-threaded to avoid
          * initialization issues in libgcrypt. */
+#ifdef WIN32
+        curl_global_init (CURL_GLOBAL_DEFAULT);
+#else
         curl_global_init (CURL_GLOBAL_SSL);
+#endif
         return (0);
 } /* }}} int wh_init */
 

@@ -88,6 +88,10 @@ case $host_os in
 	*)
 	ac_system="unknown"
 esac
+if test "x$OS" = "xWindows_NT"
+then
+	ac_system="Windows_NT"
+fi
 AC_MSG_RESULT([$ac_system])
 
 AM_CONDITIONAL([BUILD_LINUX],[test "x$x$ac_system" = "xLinux"])
@@ -96,6 +100,7 @@ AM_CONDITIONAL([BUILD_DARWIN],[test "x$x$ac_system" = "xDarwin"])
 AM_CONDITIONAL([BUILD_OPENBSD],[test "x$x$ac_system" = "xOpenBSD"])
 AM_CONDITIONAL([BUILD_AIX],[test "x$x$ac_system" = "xAIX"])
 AM_CONDITIONAL([BUILD_FREEBSD],[test "x$x$ac_system" = "xFreeBSD"])
+AM_CONDITIONAL([COMPILING_ON_WIN32],[test "x$x$ac_system" = "xWindows_NT"])
 
 if test "x$ac_system" = "xLinux"
 then
@@ -735,8 +740,13 @@ fi
 AC_CHECK_FUNCS(getpwnam_r getgrnam_r setgroups regcomp regerror regexec regfree)
 
 socket_needs_socket="no"
-AC_CHECK_FUNCS(socket, [], AC_CHECK_LIB(socket, socket, [socket_needs_socket="yes"], AC_MSG_ERROR(cannot find socket)))
+socket_needs_gnulib="no"
+AC_CHECK_FUNCS(socket, [],
+               AC_CHECK_LIB(socket, socket, [socket_needs_socket="yes"],
+                            AC_CHECK_LIB(gnu, rpl_socket, [socket_needs_gnulib="yes"],
+                                         AC_MSG_ERROR(cannot find socket))))
 AM_CONDITIONAL(BUILD_WITH_LIBSOCKET, test "x$socket_needs_socket" = "xyes")
+AM_CONDITIONAL(BUILD_WITH_GNULIB, test "x$socket_needs_gnulib" = "xyes")
 
 clock_gettime_needs_rt="no"
 clock_gettime_needs_posix4="no"
@@ -761,13 +771,16 @@ fi
 
 nanosleep_needs_rt="no"
 nanosleep_needs_posix4="no"
+nanosleep_needs_gnulib="no"
 AC_CHECK_FUNCS(nanosleep,
     [],
     AC_CHECK_LIB(rt, nanosleep,
         [nanosleep_needs_rt="yes"],
         AC_CHECK_LIB(posix4, nanosleep,
             [nanosleep_needs_posix4="yes"],
-            AC_MSG_ERROR(cannot find nanosleep))))
+            AC_CHECK_FUNCS(rpl_nanosleep,
+                [nanosleep_needs_gnulib="yes"],
+                AC_MSG_ERROR(cannot find nanosleep)))))
 
 AM_CONDITIONAL(BUILD_WITH_LIBRT, test "x$clock_gettime_needs_rt" = "xyes" || test "x$nanosleep_needs_rt" = "xyes")
 AM_CONDITIONAL(BUILD_WITH_LIBPOSIX4, test "x$clock_gettime_needs_posix4" = "xyes" || test "x$nanosleep_needs_posix4" = "xyes")

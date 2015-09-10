@@ -136,9 +136,15 @@ char *subst_string (char *buf, size_t buflen, const char *string,
 
 	if (i >= buflen)
 	{
+#ifdef WIN32
+		WARNING ("subst_string: Loop exited after %u iterations: "
+				"string = %s; needle = %s; replacement = %s;",
+				(unsigned)i, string, needle, replacement);
+#else
 		WARNING ("subst_string: Loop exited after %zu iterations: "
 				"string = %s; needle = %s; replacement = %s;",
 				i, string, needle, replacement);
+#endif
 	}
 
 	sfree (temp);

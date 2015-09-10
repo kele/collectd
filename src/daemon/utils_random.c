@@ -46,6 +46,10 @@ static void cdrand_seed (void)
   seed[1] = (unsigned short) (t >> 16);
   seed[2] = (unsigned short) (t >> 32);
 
+#ifdef WIN32
+  srand ((unsigned) t);
+#endif
+
   have_seed = 1;
 }
 
@@ -55,7 +59,11 @@ double cdrand_d (void)
 
   pthread_mutex_lock (&lock);
   cdrand_seed ();
+#ifndef WIN32
   r = erand48 (seed);
+#else
+  r = (double)rand() / (double)RAND_MAX;
+#endif
   pthread_mutex_unlock (&lock);
 
   return (r);

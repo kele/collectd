@@ -13,8 +13,20 @@ endif
 AM_CPPFLAGS += -DPLUGINDIR='"${pkglibdir}"'
 AM_CPPFLAGS += -DPKGDATADIR='"${pkgdatadir}"'
 
+COMMON_LDFLAGS =
+
+if COMPILING_ON_WIN32
+COMMON_LDFLAGS += -no-undefined -shared
+endif
+
 # Link to these libraries..
 COMMON_LIBS =
+if COMPILING_ON_WIN32
+COMMON_LIBS += -lpthread -lws2_32 # TODO: do I need the -lpthread?
+endif
+if BUILD_WITH_GNULIB
+COMMON_LIBS += -lgnu
+endif
 if BUILD_WITH_LIBRT
 COMMON_LIBS += -lrt
 endif

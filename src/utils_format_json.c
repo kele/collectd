@@ -134,7 +134,11 @@ static int values_to_json (char *buffer, size_t buffer_size, /* {{{ */
         BUFFER_ADD ("null");
     }
     else if (ds->ds[i].type == DS_TYPE_COUNTER)
+#ifdef WIN32
+      BUFFER_ADD ("%I64u", vl->values[i].counter);
+#else
       BUFFER_ADD ("%llu", vl->values[i].counter);
+#endif
     else if (ds->ds[i].type == DS_TYPE_DERIVE)
       BUFFER_ADD ("%"PRIi64, vl->values[i].derive);
     else if (ds->ds[i].type == DS_TYPE_ABSOLUTE)
