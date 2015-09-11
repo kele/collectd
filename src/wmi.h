@@ -65,6 +65,7 @@ typedef struct wmi_metric_s
     wmi_value_t values[0];
 } wmi_metric_t;
 LIST_DEF_TYPE(wmi_metric_t);
+wmi_metric_t *wmi_metric_alloc(int num_values);
 void wmi_metric_free(wmi_metric_t *m);
 
 typedef struct wmi_query_s

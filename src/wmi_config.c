@@ -183,7 +183,7 @@ static wmi_metric_t* config_get_metric(oconfig_item_t *ci)
         goto err;
 
 
-    metric = malloc (sizeof (wmi_metric_t) + values_num * sizeof (wmi_value_t));
+    metric = wmi_metric_alloc (values_num);
     metric->values_num = 0;
     metric->typename = typename;
     metric->type_instance = type_instance;
@@ -339,6 +339,11 @@ void wmi_query_free(wmi_query_t *q)
         LIST_FREE(q->metrics);
     }
     free (q);
+}
+
+wmi_metric_t *wmi_metric_alloc(int num_values)
+{
+    return malloc (sizeof (wmi_metric_t) + num_values * sizeof (wmi_value_t));
 }
 
 void wmi_metric_free(wmi_metric_t *m)
