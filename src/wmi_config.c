@@ -15,7 +15,8 @@ static plugin_instance_t* config_get_plugin_instance (oconfig_item_t *ci)
         {
             if (base)
             {
-                ERROR ("wmi error: There can be only one PluginInstance in an Instance block.");
+                ERROR ("wmi error: There can be only one PluginInstance in "
+                        "an Instance block.");
                 return (NULL);
             }
 
@@ -34,7 +35,7 @@ static plugin_instance_t* config_get_plugin_instance (oconfig_item_t *ci)
     return (pi);
 }
 
-static char* config_get_typename_from_metric (oconfig_item_t *ci)
+static char* config_get_typename (oconfig_item_t *ci)
 {
     int i;
     char *typename = NULL;
@@ -45,12 +46,13 @@ static char* config_get_typename_from_metric (oconfig_item_t *ci)
         {
             if (typename)
             {
-                ERROR ("wmi error: Multiple Types provided in one Metric block.");
+                ERROR ("wmi error: Multiple Types provided in one block.");
                 free (typename);
                 return (NULL);
             }
 
-            if (child->values_num != 1 || child->values[0].type != OCONFIG_TYPE_STRING)
+            if (child->values_num != 1 
+                    || child->values[0].type != OCONFIG_TYPE_STRING)
             {
                 ERROR ("wmi error: Type needs a single string argument,");
                 return (NULL);
@@ -62,7 +64,7 @@ static char* config_get_typename_from_metric (oconfig_item_t *ci)
 
     if (!typename)
     {
-        ERROR ("wmi error: Type declaration not found in a Metric block.");
+        ERROR ("wmi error: Type declaration not found in block.");
         return (NULL);
     }
 
@@ -72,9 +74,11 @@ static char* config_get_typename_from_metric (oconfig_item_t *ci)
 const char *metric_supported_options[] =
 {
     "TypeInstance",
+    "TypeInstanceFrom",
     "Value",
     "Type"
 };
+
 
 static int config_get_metric_sanity_check(oconfig_item_t *ci)
 {
@@ -84,55 +88,85 @@ static int config_get_metric_sanity_check(oconfig_item_t *ci)
 
     for (i = 0; i < ci->children_num; i++)
     {
-        oconfig_item_t *child = &ci->children[i];
         int j;
         int found = 0;
-        for (j = 0; j < sizeof (metric_supported_options); j++)
-            if (strcmp (metric_supported_options[j], child->key))
+        oconfig_item_t *child = &ci->children[i];
+
+        for (j = 0; j < COUNTOF (metric_supported_options); j++)
+        {
+            if (strcmp (metric_supported_options[j], child->key) == 0)
             {
                 found = 1;
                 break;
             }
+        }
 
         if (!found)
         {
+            ERROR ("%s option is not supported in Metric block!", child->key);
             return (-1);
-            // TODO: error
         }
     }
 
     return (0);
 }
 
-static char* config_get_type_instance_from_metric(oconfig_item_t *ci)
+static wmi_type_instance_t* config_get_type_instance(oconfig_item_t *ci)
 {
     int i;
-    char *type_instance = NULL;
+    int num_froms, read_froms;
+    wmi_type_instance_t* type_instance = NULL;
 
+    num_froms = 0;
+    for (i = 0; i < ci->children_num; i++)
+    {
+        oconfig_item_t *child = &ci->children[i];
+        if (strcmp ("TypeInstanceFrom", child->key) == 0)
+            num_froms++;
+    }
+
+    type_instance = wmi_type_instance_alloc (num_froms);
+
+    read_froms = 0;
     for (i = 0; i < ci->children_num; i++)
     {
         oconfig_item_t *child = &ci->children[i];
         if (strcmp ("TypeInstance", child->key) == 0)
         {
-            if (type_instance)
+            if (type_instance->base)
             {
-                ERROR ("wmi error: Multiple TypeInstances provided in one Metric block,");
+                ERROR ("wmi error: multiple TypeInstances provided "
+                        "in one Metric block,");
                 free (type_instance);
                 return (NULL);
             }
 
-            if (cf_util_get_string (child, &type_instance))
+            if (cf_util_get_string (child, &type_instance->base))
             {
                 ERROR ("wmi error: TypeInstance needs a single string argument.");
                 return (NULL);
             }
+        }
+        else if (strcmp ("TypeInstanceFrom", child->key) == 0)
+        {
+            char *str = NULL;
+            if (cf_util_get_string (child, &str))
+            {
+                ERROR ("wmi error: TypeInstanceFrom needs a single string argument.");
+                free (type_instance);
+                return (NULL);
+            }
+
+            type_instance->from[read_froms] = strtowstr (str);
+            free (str);
+            read_froms++;
         }
     }
 
     return (type_instance);
 }
 
-static int config_get_number_of_values_from_metric (oconfig_item_t *ci)
+static int config_get_number_of_values (oconfig_item_t *ci)
 {
     int i;
     int values_num = 0;
@@ -141,7 +175,8 @@ static int config_get_number_of_values_from_metric (oconfig_item_t *ci)
         oconfig_item_t *child = &ci->children[i];
         if (strcmp ("Value", child->key) == 0)
         {
-            if (child->values_num != 2 || child->values[0].type != OCONFIG_TYPE_STRING
+            if (child->values_num != 2 
+                    || child->values[0].type != OCONFIG_TYPE_STRING
                     || child->values[1].type != OCONFIG_TYPE_STRING)
             {
                 ERROR ("wmi error: Value expects exactly two string arguments: "
@@ -165,21 +200,20 @@ static wmi_metric_t* config_get_metric(oconfig_item_t *ci)
 {
     int i;
     char *typename;
-    char *type_instance;
+    wmi_type_instance_t *type_instance;
     wmi_metric_t *metric = NULL;
     int values_num = 0;
-
 
     if (config_get_metric_sanity_check(ci))
         return (NULL);
 
-    if ((typename = config_get_typename_from_metric (ci)) == NULL)
+    if ((typename = config_get_typename (ci)) == NULL)
         goto err;
 
-    if ((type_instance = config_get_type_instance_from_metric (ci)) == NULL)
+    if ((type_instance = config_get_type_instance (ci)) == NULL)
         goto err;
 
-    if ((values_num = config_get_number_of_values_from_metric (ci)) <= 0)
+    if ((values_num = config_get_number_of_values (ci)) <= 0)
         goto err;
 
 
@@ -235,7 +269,8 @@ static wmi_query_t* config_get_query(oconfig_item_t *ci, plugin_instance_t *pi)
             }
             if (cf_util_get_string (child, &stmt))
             {
-                ERROR("wmi error: Statement requires a single string as an argument.");
+                ERROR("wmi error: Statement requires a single "
+                        "string as an argument.");
                 status = -1;
                 break;
             }
@@ -259,7 +294,7 @@ static wmi_query_t* config_get_query(oconfig_item_t *ci, plugin_instance_t *pi)
 
     if (status)
     {
-        LIST_FREE (metrics);
+        LIST_FREE (metrics, wmi_metric_free);
         return NULL;
     }
 
@@ -272,7 +307,8 @@ static wmi_query_t* config_get_query(oconfig_item_t *ci, plugin_instance_t *pi)
     return (query);
 }
 
-static int add_instance (oconfig_item_t *ci, LIST_TYPE(plugin_instance_t) **plugin_instances)
+static int add_instance (oconfig_item_t *ci,
+        LIST_TYPE(plugin_instance_t) **plugin_instances)
 {
     int i;
     // TODO; error handling
@@ -298,7 +334,8 @@ static int add_instance (oconfig_item_t *ci, LIST_TYPE(plugin_instance_t) **plug
     return (0);
 }
 
-int wmi_configure (oconfig_item_t *ci, LIST_TYPE(plugin_instance_t) **plugin_instances)
+int wmi_configure (oconfig_item_t *ci,
+        LIST_TYPE(plugin_instance_t) **plugin_instances)
 {
     int i;
     int status;
@@ -332,18 +369,27 @@ void wmi_query_free(wmi_query_t *q)
     {
         free (q->statement);
         free (q->plugin_instance);
-        
-        LIST_TYPE(wmi_metric_t) *m;
-        for (m = q->metrics; m; m = LIST_NEXT(m))
-            wmi_metric_free (LIST_NODE (m));
-        LIST_FREE(q->metrics);
+        LIST_FREE(q->metrics, wmi_metric_free);
     }
     free (q);
 }
 
+wmi_type_instance_t* wmi_type_instance_alloc(int num_from)
+{
+    int size = sizeof (wmi_type_instance_t) + num_from * sizeof (char *);
+    wmi_type_instance_t* ti = malloc (size);
+    memset (ti, 0, size);
+    ti->num_from = num_from;
+    return (ti);
+}
+
 wmi_metric_t *wmi_metric_alloc(int num_values)
 {
-    return malloc (sizeof (wmi_metric_t) + num_values * sizeof (wmi_value_t));
+    int size = sizeof (wmi_metric_t) + num_values * sizeof (wmi_value_t);
+    wmi_metric_t *m = malloc (size);
+    memset (m, 0, size);
+    m->values_num = num_values;
+    return (m);
 }
 
 void wmi_metric_free(wmi_metric_t *m)

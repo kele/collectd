@@ -28,17 +28,19 @@ do { \
     list = _n; \
 } while (0)
 
-#define LIST_FREE(list) \
+#define LIST_FREE(list, node_free) \
 do { \
     __typeof__(list) _head = list; \
     while (_head != NULL) \
     { \
         __typeof__(_head) _next = LIST_NEXT(_head); \
-        free (LIST_NODE(_head)); \
+        node_free (LIST_NODE(_head)); \
         free (_head); \
         _head = _next; \
     } \
 } while (0)
+
+#define COUNTOF(x) ((sizeof(x)/sizeof(0[x])) / ((size_t)(!(sizeof(x) % sizeof(0[x])))))
 
 struct wmi_query_s;
 typedef struct wmi_query_s wmi_query_t;
@@ -49,6 +51,7 @@ typedef struct plugin_instance_s
     LIST_TYPE(wmi_query_t) *queries;
 } plugin_instance_t;
 LIST_DEF_TYPE(plugin_instance_t);
+void plugin_instance_free (plugin_instance_t *pi);
 
 typedef struct wmi_value_s
 {
@@ -57,10 +60,19 @@ typedef struct wmi_value_s
 } wmi_value_t;
 void wmi_value_free(wmi_value_t *w);
 
+typedef struct wmi_type_instance_s
+{
+    char *base;
+    int num_from;
+    wchar_t *from[0];
+} wmi_type_instance_t;
+wmi_type_instance_t* wmi_type_instance_alloc(int num_from);
+void wmi_type_instance_free(wmi_type_instance_t *ti);
+
 typedef struct wmi_metric_s
 {
     char *typename;
-    char *type_instance;
+    wmi_type_instance_t *type_instance;
     int values_num;
     wmi_value_t values[0];
 } wmi_metric_t;

@@ -10,6 +10,9 @@
 #include "wmi.h"
 #include "wmi_variant_utils.h"
 
+static LIST_TYPE(plugin_instance_t) *plugin_instances;
+
+
 wchar_t* strtowstr(const char *source)
 {
     int source_len;
@@ -34,16 +37,12 @@ char* wstrtostr (const wchar_t *source)
 }
 
 
-static LIST_TYPE(plugin_instance_t) *plugin_instances;
-
-
 typedef struct wmi_connection_s
 {
     IWbemServices *services;
     IWbemLocator *locator;
     BSTR resource;
     BSTR language;
-
 } wmi_connection_t;
 
 typedef struct wmi_results_s
@@ -227,11 +226,16 @@ static int wmi_init (void)
     return (0);
 }
 
+void plugin_instance_free (plugin_instance_t *pi)
+{
+    free (pi->base);
+    LIST_FREE (pi->queries, wmi_query_free);
+}
+
 static int wmi_shutdown (void)
 {
-    // TODO; make a proper cleanup
-    LIST_FREE(plugin_instances);
-    wmi_release(wmi);
+    LIST_FREE (plugin_instances, plugin_instance_free);
+    wmi_release (wmi);
     return (0);
 }
 
@@ -256,7 +260,7 @@ static void store (VARIANT *src, value_t *dst, int dst_type)
         break;
 
     default:
-        // TODO: error handling here? nah...
+        ERROR ("Destination type '%d' is not supported", dst_type);
         break;
     }
 }
@@ -271,9 +275,113 @@ static int find_index_in_ds (const data_set_t *ds, const char *name)
     return (-1);
 }
 
+static void sanitize_string (char *s)
+{
+    int i;
+    for (i = 0; s[i]; i++)
+    {
+        if (isalnum (s[i]) || s[i] == '-')
+            continue;
+        else
+            s[i] = '_';
+    }
+}
+
+static void get_type_instance (char *dest, int size, const wmi_type_instance_t *ti,
+        const wmi_result_t *result)
+{
+    int i;
+    VARIANT v;
+
+    if (ti->base)
+        sstrncpy (dest, ti->base, size);
+    else
+        dest[0] = '\0';
+
+    for (i = 0; i < ti->num_from; i++)
+    {
+        int status;
+        int len = strlen (dest);
+        int space_left = size - len;
+
+        wmi_result_get_value (result, ti->from[i], &v);
+        char *type_instance_part = wstrtostr (v.bstrVal);
+        sanitize_string (type_instance_part);
+        
+        if (len > 0)
+            status = ssnprintf (&dest[len], space_left, "-%s", type_instance_part);
+        else
+            status = ssnprintf (&dest[len], space_left, "%s", type_instance_part);
+
+        if (status < 0 || status >= space_left)
+        {
+            WARNING ("wmi warning: value of TypeInstanceFrom \"%s\" did not "
+                    "fit into type instance (which is of size %d).",
+                    type_instance_part, size);
+        }
+
+        free (type_instance_part);
+    }
+}
+
+static int wmi_exec_query (wmi_query_t *q)
+{
+    wmi_results_t *results;
+    value_list_t vl = VALUE_LIST_INIT;
+
+    sstrncpy (vl.host, hostname_g, sizeof (vl.host));
+    sstrncpy (vl.plugin, "wmi", sizeof (vl.plugin));
+    sstrncpy (vl.plugin_instance, q->plugin_instance->base, sizeof (vl.plugin_instance));
+
+    results = wmi_query(wmi, q->statement);        
+
+    wmi_result_t *result;
+    while ((result = wmi_get_next_result (results)))
+    {
+        LIST_TYPE(wmi_metric_t) *mn;
+        for (mn = q->metrics; mn != NULL; mn = LIST_NEXT(mn))
+        {
+            value_t *values;
+            const data_set_t *ds;
+            int i;
+            VARIANT v;
+            wmi_metric_t *m = LIST_NODE(mn);
+
+            /* Getting values */
+            values = calloc (m->values_num, sizeof (value_t));
+            ds = plugin_get_ds (m->typename);
+            for (i = 0; i < m->values_num; i++)
+            {
+                int index_in_ds;
+                wmi_result_get_value (result, m->values[i].source, &v);
+
+                index_in_ds = find_index_in_ds (ds, m->values[i].dest);
+                if (index_in_ds != -1)
+                    store (&v, &values[i], ds->ds[index_in_ds].type);
+                else
+                    WARNING ("wmi warning: Cannot find field %s in type %s.",
+                            m->values[i].dest, ds->type);
+            }
+            vl.values_len = m->values_num;
+            vl.values = values;
+
+            get_type_instance (vl.type_instance, sizeof (vl.type_instance),
+                    m->type_instance, result);
+
+            sstrncpy (vl.type, m->typename, sizeof (vl.type));
+
+            plugin_dispatch_values (&vl);
+            free (values);
+        }
+        wmi_result_release(result);
+    }
+    wmi_results_release(results);
+
+    return (0);
+}
+
 static int wmi_read (void)
 {
-    // TODO: this looks so ugly :(
     LIST_TYPE(plugin_instance_t) *pn;
     for (pn = plugin_instances; pn != NULL; pn = LIST_NEXT(pn))
     {
@@ -282,56 +390,9 @@ static int wmi_read (void)
         LIST_TYPE(wmi_query_t) *qn;
         for (qn = pi->queries; qn != NULL; qn = LIST_NEXT(qn))
         {
-            wmi_query_t *q;
-            wmi_results_t *results;
-            value_list_t vl = VALUE_LIST_INIT;
-
-            q = LIST_NODE(qn);
-
-            sstrncpy (vl.host, hostname_g, sizeof (vl.host));
-            sstrncpy (vl.plugin, "wmi", sizeof (vl.plugin));
-            sstrncpy (vl.plugin_instance, q->plugin_instance->base, sizeof (vl.plugin_instance));
-
-            results = wmi_query(wmi, q->statement);        
-
-            wmi_result_t *result;
-            while ((result = wmi_get_next_result (results)))
-            {
-                LIST_TYPE(wmi_metric_t) *mn;
-                for (mn = q->metrics; mn != NULL; mn = LIST_NEXT(mn))
-                {
-                    value_t *values;
-                    const data_set_t *ds;
-                    int i;
-                    VARIANT v;
-                    wmi_metric_t *m = LIST_NODE(mn);
-
-                    values = calloc (m->values_num, sizeof (value_t));
-                    ds = plugin_get_ds (m->typename);
-
-                    for (i = 0; i < m->values_num; i++)
-                    {
-                        int index_in_ds;
-                        wmi_result_get_value (result, m->values[i].source, &v);
-
-                        index_in_ds = find_index_in_ds (ds, m->values[i].dest);
-                        if (index_in_ds != -1)
-                            store (&v, &values[i], ds->ds[index_in_ds].type);
-                        else
-                            ERROR ("wmi error: Cannot find field %s in type %s",
-                                    m->values[i].dest, ds->type);
-                    }
-
-                    vl.values_len = m->values_num;
-                    vl.values = values;
-                    sstrncpy (vl.type, m->typename, sizeof (vl.type));
-                    sstrncpy (vl.type_instance, m->type_instance, sizeof (vl.type_instance));
-                    plugin_dispatch_values (&vl);
-                    free (values);
-                }
-                wmi_result_release(result);
-            }
-            wmi_results_release(results);
+            int status = wmi_exec_query (LIST_NODE (qn));
+            if (status)
+                return (status);
         }
     }
     return (0);
