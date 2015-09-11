@@ -42,12 +42,21 @@ do { \
 
 #define COUNTOF(x) ((sizeof(x)/sizeof(0[x])) / ((size_t)(!(sizeof(x) % sizeof(0[x])))))
 
+
+typedef struct plugin_instance_name_s
+{
+    char *base;
+    int num_from;
+    char *from[0];
+} plugin_instance_name_t;
+plugin_instance_name_t* plugin_instance_name_alloc(int num_from);
+
 struct wmi_query_s;
 typedef struct wmi_query_s wmi_query_t;
 LIST_DECL_TYPE(wmi_query_t);
 typedef struct plugin_instance_s
 {
-    char *base;
+    plugin_instance_name_t *name;
     LIST_TYPE(wmi_query_t) *queries;
 } plugin_instance_t;
 LIST_DEF_TYPE(plugin_instance_t);

@@ -36,6 +36,15 @@ char* wstrtostr (const wchar_t *source)
     return (result);
 }
 
+plugin_instance_name_t* plugin_instance_name_alloc (int num_from)
+{
+    int size = sizeof (plugin_instance_name_t) + num_from * sizeof (char*);
+    plugin_instance_name_t *pi = malloc (size);
+
+    memset (pi, 0, size);
+    pi->num_from = num_from;
+    return (pi);
+}
 
 typedef struct wmi_connection_s
 {
@@ -228,7 +237,7 @@ static int wmi_init (void)
 
 void plugin_instance_free (plugin_instance_t *pi)
 {
-    free (pi->base);
+    free (pi->name);
     LIST_FREE (pi->queries, wmi_query_free);
 }
 
@@ -324,6 +333,11 @@ static void get_type_instance (char *dest, int size, const wmi_type_instance_t *
     }
 }
 
+void get_plugin_instance_name (char *dest, int size, const plugin_instance_name_t *pi)
+{
+    sstrncpy (dest, pi->base, size);
+}
+
 static int wmi_exec_query (wmi_query_t *q)
 {
     wmi_results_t *results;
@@ -331,7 +345,9 @@ static int wmi_exec_query (wmi_query_t *q)
 
     sstrncpy (vl.host, hostname_g, sizeof (vl.host));
     sstrncpy (vl.plugin, "wmi", sizeof (vl.plugin));
-    sstrncpy (vl.plugin_instance, q->plugin_instance->base, sizeof (vl.plugin_instance));
+
+    get_plugin_instance_name (vl.plugin_instance, sizeof (vl.plugin_instance),
+            q->plugin_instance->name);
 
     results = wmi_query(wmi, q->statement);        
 

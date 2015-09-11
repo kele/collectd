@@ -30,7 +30,8 @@ static plugin_instance_t* config_get_plugin_instance (oconfig_item_t *ci)
 
     pi = malloc (sizeof (plugin_instance_t));
     pi->queries = NULL;
-    pi->base = base;
+    pi->name = plugin_instance_name_alloc (0);
+    pi->name->base = base;
 
     return (pi);
 }
