@@ -13,6 +13,7 @@
 static LIST_TYPE(plugin_instance_t) *plugin_instances;
 
 
+/* String conversion utils */
 wchar_t* strtowstr(const char *source)
 {
     int source_len;
@@ -36,14 +37,23 @@ char* wstrtostr (const wchar_t *source)
     return (result);
 }
 
-plugin_instance_name_t* plugin_instance_name_alloc (int num_from)
+/* metadata_str_t */
+metadata_str_t* metadata_str_alloc (int num_parts)
 {
-    int size = sizeof (plugin_instance_name_t) + num_from * sizeof (char*);
-    plugin_instance_name_t *pi = malloc (size);
+    int size = sizeof (metadata_str_t) + num_parts * sizeof (char*);
+    metadata_str_t *pi = malloc (size);
 
     memset (pi, 0, size);
-    pi->num_from = num_from;
+    pi->num_parts = num_parts;
     return (pi);
+}
+
+void metadata_str_free (metadata_str_t *ms)
+{
+    int i;
+    for (i = 0; i < ms->num_parts; i++)
+        free (ms->parts[i]);
+    free (ms);
 }
 
 typedef struct wmi_connection_s
@@ -237,7 +247,7 @@ static int wmi_init (void)
 
 void plugin_instance_free (plugin_instance_t *pi)
 {
-    free (pi->name);
+    free (pi->base_name);
     LIST_FREE (pi->queries, wmi_query_free);
 }
 
@@ -296,7 +306,7 @@ static void sanitize_string (char *s)
     }
 }
 
-static void get_type_instance (char *dest, int size, const wmi_type_instance_t *ti,
+static void get_type_instance (char *dest, int size, const metadata_str_t *ti,
         const wmi_result_t *result)
 {
     int i;
@@ -307,13 +317,13 @@ static void get_type_instance (char *dest, int size, const wmi_type_instance_t *
     else
         dest[0] = '\0';
 
-    for (i = 0; i < ti->num_from; i++)
+    for (i = 0; i < ti->num_parts; i++)
     {
         int status;
         int len = strlen (dest);
         int space_left = size - len;
 
-        wmi_result_get_value (result, ti->from[i], &v);
+        wmi_result_get_value (result, ti->parts[i], &v);
         char *type_instance_part = wstrtostr (v.bstrVal);
         sanitize_string (type_instance_part);
         
@@ -333,9 +343,9 @@ static void get_type_instance (char *dest, int size, const wmi_type_instance_t *
     }
 }
 
-void get_plugin_instance_name (char *dest, int size, const plugin_instance_name_t *pi)
+void get_metadata_str (char *dest, int size, const char *pi)
 {
-    sstrncpy (dest, pi->base, size);
+    sstrncpy (dest, pi, size);
 }
 
 static int wmi_exec_query (wmi_query_t *q)
@@ -346,8 +356,8 @@ static int wmi_exec_query (wmi_query_t *q)
     sstrncpy (vl.host, hostname_g, sizeof (vl.host));
     sstrncpy (vl.plugin, "wmi", sizeof (vl.plugin));
 
-    get_plugin_instance_name (vl.plugin_instance, sizeof (vl.plugin_instance),
-            q->plugin_instance->name);
+    get_metadata_str (vl.plugin_instance, sizeof (vl.plugin_instance),
+            q->plugin_instance->base_name);
 
     results = wmi_query(wmi, q->statement);        
 

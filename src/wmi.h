@@ -43,20 +43,21 @@ do { \
 #define COUNTOF(x) ((sizeof(x)/sizeof(0[x])) / ((size_t)(!(sizeof(x) % sizeof(0[x])))))
 
 
-typedef struct plugin_instance_name_s
+typedef struct metadata_str_s
 {
     char *base;
-    int num_from;
-    char *from[0];
-} plugin_instance_name_t;
-plugin_instance_name_t* plugin_instance_name_alloc(int num_from);
+    int num_parts;
+    wchar_t *parts[0];
+} metadata_str_t;
+metadata_str_t* metadata_str_alloc(int num_parts);
+void metadata_str_free (metadata_str_t *ms);
 
 struct wmi_query_s;
 typedef struct wmi_query_s wmi_query_t;
 LIST_DECL_TYPE(wmi_query_t);
 typedef struct plugin_instance_s
 {
-    plugin_instance_name_t *name;
+    char *base_name;
     LIST_TYPE(wmi_query_t) *queries;
 } plugin_instance_t;
 LIST_DEF_TYPE(plugin_instance_t);
@@ -69,19 +70,10 @@ typedef struct wmi_value_s
 } wmi_value_t;
 void wmi_value_free(wmi_value_t *w);
 
-typedef struct wmi_type_instance_s
-{
-    char *base;
-    int num_from;
-    wchar_t *from[0];
-} wmi_type_instance_t;
-wmi_type_instance_t* wmi_type_instance_alloc(int num_from);
-void wmi_type_instance_free(wmi_type_instance_t *ti);
-
 typedef struct wmi_metric_s
 {
     char *typename;
-    wmi_type_instance_t *type_instance;
+    metadata_str_t *type_instance;
     int values_num;
     wmi_value_t values[0];
 } wmi_metric_t;
