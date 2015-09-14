@@ -56,6 +56,7 @@ void metadata_str_free (metadata_str_t *ms)
     free (ms);
 }
 
+/* WMI specific */
 typedef struct wmi_connection_s
 {
     IWbemServices *services;
@@ -64,22 +65,22 @@ typedef struct wmi_connection_s
     BSTR language;
 } wmi_connection_t;
 
-typedef struct wmi_results_s
+typedef struct wmi_result_list_s
 {
     IEnumWbemClassObject *results;
     ULONG _returned_count;
-} wmi_results_t;
+} wmi_result_list_t;
 
 typedef struct wmi_result_s
 {
     IWbemClassObject* result;
 } wmi_result_t;
 
-wmi_results_t* wmi_query (wmi_connection_t *connection, const wchar_t *query)
+wmi_result_list_t* wmi_query (wmi_connection_t *connection, const wchar_t *query)
 {
     HRESULT hr;
 
-    wmi_results_t *res = malloc (sizeof (wmi_results_t));
+    wmi_result_list_t *res = malloc (sizeof (wmi_result_list_t));
     BSTR query_bstr = SysAllocString (query);
     hr = connection->services->lpVtbl->ExecQuery(
             connection->services,
@@ -108,13 +109,13 @@ wmi_results_t* wmi_query (wmi_connection_t *connection, const wchar_t *query)
     return (NULL);
 }
 
-void wmi_results_release (wmi_results_t *results)
+void wmi_result_list_release (wmi_result_list_t *results)
 {
     if (results)
         results->results->lpVtbl->Release (results->results);
 }
 
-wmi_result_t* wmi_get_next_result (wmi_results_t *results)
+wmi_result_t* wmi_get_next_result (wmi_result_list_t *results)
 {
     if (!results)
         return (NULL);
@@ -136,7 +137,7 @@ wmi_result_t* wmi_get_next_result (wmi_results_t *results)
     }
 }
 
-void wmi_result_release(wmi_result_t *result)
+void wmi_result_release (wmi_result_t *result)
 {
     result->result->lpVtbl->Release (result->result);
 }
@@ -350,7 +351,7 @@ void get_metadata_str (char *dest, int size, const char *pi)
 
 static int wmi_exec_query (wmi_query_t *q)
 {
-    wmi_results_t *results;
+    wmi_result_list_t *results;
     value_list_t vl = VALUE_LIST_INIT;
 
     sstrncpy (vl.host, hostname_g, sizeof (vl.host));
@@ -401,7 +402,7 @@ static int wmi_exec_query (wmi_query_t *q)
         }
         wmi_result_release(result);
     }
-    wmi_results_release(results);
+    wmi_result_list_release(results);
 
     return (0);
 }
