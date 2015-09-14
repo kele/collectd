@@ -311,46 +311,52 @@ static void sanitize_string (char *s)
     }
 }
 
-static void get_type_instance (char *dest, int size, const metadata_str_t *ti,
+static void append_metadata_string (char *dest, int size, const metadata_str_t *ms,
         const wmi_result_t *result)
 {
     int i;
+    int status = 0;
     VARIANT v;
 
-    if (ti->base)
-        sstrncpy (dest, ti->base, size);
-    else
-        dest[0] = '\0';
+    int dest_len = strlen (dest);
+    int size_left = size - dest_len;
 
-    for (i = 0; i < ti->num_parts; i++)
+    if (ms->base)
     {
-        int status;
-        int len = strlen (dest);
-        int space_left = size - len;
-
-        wmi_result_get_value (result, ti->parts[i], &v);
-        char *type_instance_part = wstrtostr (v.bstrVal);
-        sanitize_string (type_instance_part);
-        
-        if (len > 0)
-            status = ssnprintf (&dest[len], space_left, "-%s", type_instance_part);
+        if (dest_len > 0)
+            status = ssnprintf(&dest[dest_len], size_left, "-%s", ms->base);
         else
-            status = ssnprintf (&dest[len], space_left, "%s", type_instance_part);
+            status = ssnprintf(&dest[dest_len], size_left, "%s", ms->base);
 
-        if (status < 0 || status >= space_left)
+        dest_len = strlen (dest);
+        size_left = size - dest_len;
+    }
+
+    if (!result) return;
+
+    for (i = 0; i < ms->num_parts; i++)
+    {
+        dest_len = strlen (dest);
+        size_left = size - dest_len;
+
+        wmi_result_get_value (result, ms->parts[i], &v);
+        char *part = wstrtostr (v.bstrVal);
+        sanitize_string (part);
+        
+        if (dest_len > 0)
+            status = ssnprintf (&dest[dest_len], size_left, "-%s", part);
+        else
+            status = ssnprintf (&dest[dest_len], size_left, "%s", part);
+
+        if (status < 0 || status >= size_left)
         {
-            WARNING ("wmi warning: value of TypeInstanceSuffixFrom \"%s\" did not "
-                    "fit into type instance (which is of size %d).",
-                    type_instance_part, size);
+            WARNING ("wmi warning: fetched value \"%s\" did not "
+                    "fit into metadata (which is of size %d).",
+                    part, size);
         }
 
-        free (type_instance_part);
+        free (part);
     }
-}
-
-void get_metadata_str (char *dest, int size, const char *pi)
-{
-    sstrncpy (dest, pi, size);
 }
 
 static int wmi_exec_query (wmi_query_t *q)
@@ -361,8 +367,7 @@ static int wmi_exec_query (wmi_query_t *q)
     sstrncpy (vl.host, hostname_g, sizeof (vl.host));
     sstrncpy (vl.plugin, "wmi", sizeof (vl.plugin));
 
-    get_metadata_str (vl.plugin_instance, sizeof (vl.plugin_instance),
-            q->plugin_instance->base_name);
+    sstrncpy (vl.plugin_instance, q->plugin_instance->base_name, sizeof (vl.plugin_instance));
 
     results = wmi_query(wmi, q->statement);        
 
@@ -396,8 +401,12 @@ static int wmi_exec_query (wmi_query_t *q)
             vl.values_len = m->values_num;
             vl.values = values;
 
-            get_type_instance (vl.type_instance, sizeof (vl.type_instance),
+            vl.type_instance[0] = '\0';
+            append_metadata_string (vl.type_instance, sizeof (vl.type_instance),
                     m->type_instance, result);
+
+            append_metadata_string (vl.plugin_instance, sizeof (vl.plugin_instance),
+                    m->plugin_instance, result);
 
             sstrncpy (vl.type, m->typename, sizeof (vl.type));
 

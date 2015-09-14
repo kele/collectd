@@ -42,6 +42,7 @@ const char *metric_supported_options[] =
 {
     "TypeInstance",
     "TypeInstanceSuffixFrom",
+    "PluginInstanceSuffixFrom",
     "Value",
     "Type"
 };
@@ -78,6 +79,7 @@ static int config_get_metric_sanity_check (oconfig_item_t *ci)
     return (0);
 }
 
+/* TODO: doc this. Remember about NULL args */
 static metadata_str_t* config_get_metadata_str (oconfig_item_t *ci,
         const char *base_str, const char *part_str)
 {
@@ -89,7 +91,7 @@ static metadata_str_t* config_get_metadata_str (oconfig_item_t *ci,
     for (i = 0; i < ci->children_num; i++)
     {
         oconfig_item_t *child = &ci->children[i];
-        if (strcmp (part_str, child->key) == 0)
+        if (part_str && strcmp (part_str, child->key) == 0)
             num_parts++;
     }
 
@@ -99,7 +101,7 @@ static metadata_str_t* config_get_metadata_str (oconfig_item_t *ci,
     for (i = 0; i < ci->children_num; i++)
     {
         oconfig_item_t *child = &ci->children[i];
-        if (strcmp (base_str, child->key) == 0)
+        if (base_str && strcmp (base_str, child->key) == 0)
         {
             if (ms->base)
             {
@@ -115,7 +117,7 @@ static metadata_str_t* config_get_metadata_str (oconfig_item_t *ci,
                 goto err;
             }
         }
-        else if (strcmp (part_str, child->key) == 0)
+        else if (part_str && strcmp (part_str, child->key) == 0)
         {
             char *str = NULL;
             if (cf_util_get_string (child, &str))
@@ -179,6 +181,7 @@ static wmi_metric_t* config_get_metric (oconfig_item_t *ci)
     int values_num;
     char *typename = NULL;
     metadata_str_t *type_instance = NULL;
+    metadata_str_t *plugin_instance = NULL;
     wmi_metric_t *metric = NULL;
 
     if (config_get_metric_sanity_check (ci))
@@ -193,11 +196,14 @@ static wmi_metric_t* config_get_metric (oconfig_item_t *ci)
     if ((values_num = config_values_count (ci)) <= 0)
         goto err;
 
+    if ((plugin_instance = config_get_metadata_str (ci, NULL, "PluginInstanceSuffixFrom")) == NULL)
+        goto err;
 
     metric = wmi_metric_alloc (values_num);
     values_num = 0;
     metric->typename = typename;
     metric->type_instance = type_instance;
+    metric->plugin_instance = plugin_instance;
 
     for (i = 0; i < ci->children_num; i++)
     {
@@ -375,6 +381,7 @@ void wmi_metric_free (wmi_metric_t *m)
     }
     free (m->typename);
     free (m->type_instance);
+    free (m->plugin_instance);
     free (m);
 }
 

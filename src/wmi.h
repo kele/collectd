@@ -74,6 +74,7 @@ typedef struct wmi_metric_s
 {
     char *typename;
     metadata_str_t *type_instance;
+    metadata_str_t *plugin_instance;
     int values_num;
     wmi_value_t values[0];
 } wmi_metric_t;
