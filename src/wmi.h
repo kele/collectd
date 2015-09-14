@@ -86,7 +86,7 @@ typedef struct wmi_query_s
     wchar_t *statement;
     LIST_TYPE(wmi_metric_t) *metrics;
 
-    plugin_instance_t *plugin_instance;
+    const plugin_instance_t *plugin_instance;
 } wmi_query_t;
 LIST_DEF_TYPE(wmi_query_t);
 void wmi_query_free (wmi_query_t *q);

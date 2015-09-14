@@ -10,7 +10,7 @@
 #include "wmi.h"
 #include "wmi_variant_utils.h"
 
-static LIST_TYPE(plugin_instance_t) *plugin_instances;
+static LIST_TYPE(plugin_instance_t) *plugin_instances_g;
 
 
 /* String conversion utils */
@@ -254,7 +254,7 @@ void plugin_instance_free (plugin_instance_t *pi)
 
 static int wmi_shutdown (void)
 {
-    LIST_FREE (plugin_instances, plugin_instance_free);
+    LIST_FREE (plugin_instances_g, plugin_instance_free);
     wmi_release (wmi);
     return (0);
 }
@@ -410,7 +410,7 @@ static int wmi_exec_query (wmi_query_t *q)
 static int wmi_read (void)
 {
     LIST_TYPE(plugin_instance_t) *pn;
-    for (pn = plugin_instances; pn != NULL; pn = LIST_NEXT(pn))
+    for (pn = plugin_instances_g; pn != NULL; pn = LIST_NEXT(pn))
     {
         plugin_instance_t *pi = LIST_NODE(pn);
 
@@ -429,7 +429,7 @@ static int wmi_configure_wrapper (oconfig_item_t *ci)
 {
     // TODO: change it to multiple read callback registrations,
     // one per instance
-    return (wmi_configure (ci, &plugin_instances));
+    return (wmi_configure (ci, &plugin_instances_g));
 }
 
 void module_register (void)

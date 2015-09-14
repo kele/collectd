@@ -82,7 +82,7 @@ static metadata_str_t* config_get_metadata_str (oconfig_item_t *ci,
         const char *base_str, const char *part_str)
 {
     int i;
-    int num_parts, read_froms;
+    int num_parts, read_parts;
     metadata_str_t* ms = NULL;
 
     num_parts = 0;
@@ -95,7 +95,7 @@ static metadata_str_t* config_get_metadata_str (oconfig_item_t *ci,
 
     ms = metadata_str_alloc (num_parts);
 
-    read_froms = 0;
+    read_parts = 0;
     for (i = 0; i < ci->children_num; i++)
     {
         oconfig_item_t *child = &ci->children[i];
@@ -105,15 +105,14 @@ static metadata_str_t* config_get_metadata_str (oconfig_item_t *ci,
             {
                 ERROR ("wmi error: multiple %ss provided "
                         "in one Metric block,", base_str);
-                metadata_str_free (ms);
-                return (NULL);
+                goto err;
             }
 
             if (cf_util_get_string (child, &ms->base))
             {
                 ERROR ("wmi error: %s needs a single string argument.",
                         base_str);
-                return (NULL);
+                goto err;
             }
         }
         else if (strcmp (part_str, child->key) == 0)
@@ -123,17 +122,20 @@ static metadata_str_t* config_get_metadata_str (oconfig_item_t *ci,
             {
                 ERROR ("wmi error: %s needs a single string argument.",
                         part_str);
-                metadata_str_free (ms);
-                return (NULL);
+                goto err;
             }
 
-            ms->parts[read_froms] = strtowstr (str);
+            ms->parts[read_parts] = strtowstr (str);
             free (str);
-            read_froms++;
+            read_parts++;
         }
     }
 
     return (ms);
+
+err:
+    metadata_str_free (ms);
+    return (NULL);
 }
 
 static metadata_str_t* config_get_type_instance_str (oconfig_item_t *ci)
@@ -141,7 +143,7 @@ static metadata_str_t* config_get_type_instance_str (oconfig_item_t *ci)
     return (config_get_metadata_str (ci, "TypeInstance", "TypeInstanceSuffixFrom"));
 }
 
-static int config_get_number_of_values (oconfig_item_t *ci)
+static int config_values_count (oconfig_item_t *ci)
 {
     int i;
     int values_num = 0;
@@ -176,10 +178,10 @@ static wmi_metric_t* config_get_metric (oconfig_item_t *ci)
     int i;
     char *typename;
     metadata_str_t *type_instance;
+    int values_num;
     wmi_metric_t *metric = NULL;
-    int values_num = 0;
 
-    if (config_get_metric_sanity_check(ci))
+    if (config_get_metric_sanity_check (ci))
         return (NULL);
 
     if ((typename = config_get_typename (ci)) == NULL)
@@ -188,12 +190,12 @@ static wmi_metric_t* config_get_metric (oconfig_item_t *ci)
     if ((type_instance = config_get_type_instance_str (ci)) == NULL)
         goto err;
 
-    if ((values_num = config_get_number_of_values (ci)) <= 0)
+    if ((values_num = config_values_count (ci)) <= 0)
         goto err;
 
 
     metric = wmi_metric_alloc (values_num);
-    metric->values_num = 0;
+    values_num = 0;
     metric->typename = typename;
     metric->type_instance = type_instance;
 
@@ -203,11 +205,11 @@ static wmi_metric_t* config_get_metric (oconfig_item_t *ci)
         if (strcmp ("Value", child->key) == 0)
         {
 
-            metric->values[metric->values_num].source =
+            metric->values[values_num].source =
                 strtowstr (child->values[0].value.string);
-            metric->values[metric->values_num].dest =
+            metric->values[values_num].dest =
                 strdup (child->values[1].value.string);
-            metric->values_num++;
+            values_num++;
         }
     }
 
@@ -215,16 +217,15 @@ static wmi_metric_t* config_get_metric (oconfig_item_t *ci)
 
 err:
     free (typename);
-    free (type_instance);
+    metadata_str_free (type_instance);
     return (NULL);
 }
 
-static wmi_query_t* config_get_query(oconfig_item_t *ci, plugin_instance_t *pi)
+static wmi_query_t* config_get_query (oconfig_item_t *ci, plugin_instance_t *pi)
 {
     int i;
     int status = 0;
     char *stmt = NULL;
-    int stmt_len;
     wmi_query_t *query = NULL;
     LIST_TYPE(wmi_metric_t) *metrics = NULL;
 
@@ -249,7 +250,6 @@ static wmi_query_t* config_get_query(oconfig_item_t *ci, plugin_instance_t *pi)
                 status = -1;
                 break;
             }
-            stmt_len = strlen (stmt);
         }
         else if (strcmp ("Metric", child->key) == 0)
         {
@@ -270,12 +270,12 @@ static wmi_query_t* config_get_query(oconfig_item_t *ci, plugin_instance_t *pi)
     if (status)
     {
         LIST_FREE (metrics, wmi_metric_free);
-        return NULL;
+        free (stmt);
+        return (NULL);
     }
 
     query = malloc (sizeof (wmi_query_t));
-    query->statement = calloc (stmt_len, sizeof (wchar_t));
-    mbstowcs (query->statement, stmt, stmt_len);
+    query->statement = strtowstr (stmt);
     free (stmt);
     query->metrics = metrics;
     query->plugin_instance = pi;
@@ -286,18 +286,18 @@ static int add_instance (oconfig_item_t *ci,
         LIST_TYPE(plugin_instance_t) **plugin_instances)
 {
     int i;
-    // TODO; error handling
     assert (strcmp ("Instance", ci->key) == 0);
 
+    /* Get instance name */
     plugin_instance_t *pi = malloc (sizeof (plugin_instance_t));
+    pi->base_name = NULL;
     if (cf_util_get_string (ci, &pi->base_name))
     {
         free (pi);
         return (-1);
     }
 
-    LIST_INSERT_FRONT (*plugin_instances, pi);
-
+    /* Fill the instance with queries */
     for (i = 0; i < ci->children_num; i++)
     {
         oconfig_item_t *child = &ci->children[i];
@@ -310,6 +310,8 @@ static int add_instance (oconfig_item_t *ci,
             LIST_INSERT_FRONT(pi->queries, q);
         }
     }
+
+    LIST_INSERT_FRONT (*plugin_instances, pi);
 
     return (0);
 }
@@ -342,18 +344,17 @@ int wmi_configure (oconfig_item_t *ci,
     }
 }
 
-void wmi_query_free(wmi_query_t *q)
+void wmi_query_free (wmi_query_t *q)
 {
     if (q)
     {
         free (q->statement);
-        free (q->plugin_instance);
-        LIST_FREE(q->metrics, wmi_metric_free);
+        LIST_FREE (q->metrics, wmi_metric_free);
     }
     free (q);
 }
 
-wmi_metric_t *wmi_metric_alloc(int num_values)
+wmi_metric_t *wmi_metric_alloc (int num_values)
 {
     int size = sizeof (wmi_metric_t) + num_values * sizeof (wmi_value_t);
     wmi_metric_t *m = malloc (size);
@@ -373,7 +374,7 @@ void wmi_metric_free(wmi_metric_t *m)
 }
 
 __attribute__ ((unused))
-void wmi_value_free(wmi_value_t *w)
+void wmi_value_free (wmi_value_t *w)
 {
     if (w)
     {
