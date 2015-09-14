@@ -335,7 +335,7 @@ static void get_type_instance (char *dest, int size, const metadata_str_t *ti,
 
         if (status < 0 || status >= space_left)
         {
-            WARNING ("wmi warning: value of TypeInstanceFrom \"%s\" did not "
+            WARNING ("wmi warning: value of TypeInstanceSuffixFrom \"%s\" did not "
                     "fit into type instance (which is of size %d).",
                     type_instance_part, size);
         }
