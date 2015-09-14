@@ -210,10 +210,17 @@ static int wh_flush_nolock (cdtime_t timeout, wh_callback_t *cb) /* {{{ */
 {
         int status;
 
+#ifdef WIN32
+        DEBUG ("write_http plugin: wh_flush_nolock: timeout = %.3f; "
+                        "send_buffer_fill = %u;",
+                        CDTIME_T_TO_DOUBLE (timeout),
+                        (unsigned)cb->send_buffer_fill);
+#else
         DEBUG ("write_http plugin: wh_flush_nolock: timeout = %.3f; "
                         "send_buffer_fill = %zu;",
                         CDTIME_T_TO_DOUBLE (timeout),
                         cb->send_buffer_fill);
+#endif /* WIN32 */
 
         /* timeout == 0  => flush unconditionally */
         if (timeout > 0)
@@ -411,11 +418,20 @@ static int wh_write_command (const data_set_t *ds, const value_list_t *vl, /* {{
         cb->send_buffer_fill += command_len;
         cb->send_buffer_free -= command_len;
 
+#ifdef WIN32
+
+        DEBUG ("write_http plugin: <%s> buffer %u/%u (%g%%) \"%s\"",
+                        cb->location,
+                        (unsigned)cb->send_buffer_fill, (unsigned)cb->send_buffer_size,
+                        100.0 * ((double) cb->send_buffer_fill) / ((double) cb->send_buffer_size),
+                        command);
+#else
         DEBUG ("write_http plugin: <%s> buffer %zu/%zu (%g%%) \"%s\"",
                         cb->location,
                         cb->send_buffer_fill, cb->send_buffer_size,
                         100.0 * ((double) cb->send_buffer_fill) / ((double) cb->send_buffer_size),
                         command);
+#endif /* WIN32 */
 
         /* Check if we have enough space for this command. */
         pthread_mutex_unlock (&cb->send_lock);
@@ -466,10 +482,17 @@ static int wh_write_json (const data_set_t *ds, const value_list_t *vl, /* {{{ *
                 return (status);
         }
 
+#ifdef WIN32
+        DEBUG ("write_http plugin: <%s> buffer %u/%u (%g%%)",
+                        cb->location,
+                        (unsigned)cb->send_buffer_fill, (unsigned)cb->send_buffer_size,
+                        100.0 * ((double) cb->send_buffer_fill) / ((double) cb->send_buffer_size));
+#else
         DEBUG ("write_http plugin: <%s> buffer %zu/%zu (%g%%)",
                         cb->location,
                         cb->send_buffer_fill, cb->send_buffer_size,
                         100.0 * ((double) cb->send_buffer_fill) / ((double) cb->send_buffer_size));
+#endif /* WIN32 */
 
         /* Check if we have enough space for this command. */
         pthread_mutex_unlock (&cb->send_lock);
