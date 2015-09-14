@@ -291,6 +291,7 @@ static int add_instance (oconfig_item_t *ci,
     /* Get instance name */
     plugin_instance_t *pi = malloc (sizeof (plugin_instance_t));
     pi->base_name = NULL;
+    pi->queries = NULL;
     if (cf_util_get_string (ci, &pi->base_name))
     {
         free (pi);
