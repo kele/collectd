@@ -106,7 +106,7 @@ wmi_result_list_t* wmi_query (wmi_connection_t *connection, const wchar_t *query
         ERROR ("wmi error: Invalid query: '%ls'", query);
         break;
     default:
-        ERROR ("wmi error: Unknown error during query: %ls", query);
+        ERROR ("wmi error: Unknown error [%x] during query: %ls", (unsigned)hr, query);
     }
     return (NULL);
 }
