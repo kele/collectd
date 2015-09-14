@@ -50,6 +50,8 @@ metadata_str_t* metadata_str_alloc (int num_parts)
 
 void metadata_str_free (metadata_str_t *ms)
 {
+    if (!ms) return;
+
     int i;
     for (i = 0; i < ms->num_parts; i++)
         free (ms->parts[i]);
@@ -248,6 +250,8 @@ static int wmi_init (void)
 
 void plugin_instance_free (plugin_instance_t *pi)
 {
+    if (!pi) return;
+
     free (pi->base_name);
     LIST_FREE (pi->queries, wmi_query_free);
 }

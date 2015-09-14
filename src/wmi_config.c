@@ -176,9 +176,9 @@ static int config_values_count (oconfig_item_t *ci)
 static wmi_metric_t* config_get_metric (oconfig_item_t *ci)
 {
     int i;
-    char *typename;
-    metadata_str_t *type_instance;
     int values_num;
+    char *typename = NULL;
+    metadata_str_t *type_instance = NULL;
     wmi_metric_t *metric = NULL;
 
     if (config_get_metric_sanity_check (ci))
@@ -347,15 +347,14 @@ int wmi_configure (oconfig_item_t *ci,
 
 void wmi_query_free (wmi_query_t *q)
 {
-    if (q)
-    {
-        free (q->statement);
-        LIST_FREE (q->metrics, wmi_metric_free);
-    }
+    if (!q) return;
+
+    free (q->statement);
+    LIST_FREE (q->metrics, wmi_metric_free);
     free (q);
 }
 
-wmi_metric_t *wmi_metric_alloc (int num_values)
+wmi_metric_t* wmi_metric_alloc (int num_values)
 {
     int size = sizeof (wmi_metric_t) + num_values * sizeof (wmi_value_t);
     wmi_metric_t *m = malloc (size);
@@ -364,23 +363,18 @@ wmi_metric_t *wmi_metric_alloc (int num_values)
     return (m);
 }
 
-void wmi_metric_free(wmi_metric_t *m)
+void wmi_metric_free (wmi_metric_t *m)
 {
-    if (m)
+    if (!m) return;
+
+    int i;
+    for (i = 0; i < m->values_num; i++)
     {
-        free (m->typename);
-        free (m->type_instance);
+        free (m->values[i].source);
+        free (m->values[i].dest);
     }
+    free (m->typename);
+    free (m->type_instance);
     free (m);
 }
 
-__attribute__ ((unused))
-void wmi_value_free (wmi_value_t *w)
-{
-    if (w)
-    {
-        free (w->source);
-        free (w->dest);
-    }
-    free (w);
-}
