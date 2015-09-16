@@ -61,53 +61,124 @@ void metadata_str_free (metadata_str_t *ms)
 /* WMI specific */
 typedef struct wmi_connection_s
 {
-    IWbemServices *services;
-    IWbemLocator *locator;
-    BSTR resource;
-    BSTR language;
+    IDispatch *dispatcher;
 } wmi_connection_t;
 
 typedef struct wmi_result_list_s
 {
-    IEnumWbemClassObject *results;
-    ULONG _returned_count;
+    IDispatch* results;
+
+    int count;
+    int last_result;
 } wmi_result_list_t;
 
 typedef struct wmi_result_s
 {
-    IWbemClassObject* result;
+    IDispatch* result;
 } wmi_result_t;
+
+int wmi_invoke_method (IDispatch *dispatcher, const wchar_t *method_name, DISPPARAMS *params, VARIANT *result)
+{
+    HRESULT hr;
+    DISPID dispid[1];
+    BSTR name;
+
+    name = SysAllocString (method_name);
+    hr = dispatcher->lpVtbl->GetIDsOfNames (dispatcher, &IID_NULL, &name, 1,
+            LOCALE_SYSTEM_DEFAULT, dispid);
+    SysFreeString (name);
+
+    if (FAILED (hr))
+    {
+        ERROR ("wmi error: Error while trying to invoke method %ls on object %p.",
+                method_name, dispatcher);
+        return (-1);
+    }
+
+    hr = dispatcher->lpVtbl->Invoke (dispatcher, dispid[0], &IID_NULL,
+            LOCALE_SYSTEM_DEFAULT, DISPATCH_METHOD, params, result, NULL, NULL);
+    if (FAILED (hr))
+    {
+        ERROR ("wmi error: Error while trying to invoke method %ls on object %p.",
+                method_name, dispatcher);
+        return (-1);
+    }
+
+    return (0);
+}
+
+int wmi_get_property (IDispatch *dispatcher, const wchar_t *property_name,
+        VARIANT *result)
+{
+    DISPPARAMS params;
+    HRESULT hr;
+    DISPID dispid[1];
+    BSTR name;
+
+    name = SysAllocString (property_name);
+    hr = dispatcher->lpVtbl->GetIDsOfNames (dispatcher, &IID_NULL,
+            &name, 1, LOCALE_SYSTEM_DEFAULT, dispid);
+    SysFreeString(name);
+
+    if (FAILED (hr))
+    {
+        ERROR ("wmi error: Error 0x%x while getting property '%ls' "
+                "from object %p.", (unsigned) hr, property_name, dispatcher);
+        return (-1);
+    }
+
+
+    params.cArgs = 0;
+    params.cNamedArgs = 0;
+
+    hr = dispatcher->lpVtbl->Invoke (dispatcher, dispid[0], &IID_NULL,
+            LOCALE_SYSTEM_DEFAULT, DISPATCH_PROPERTYGET, &params, result, NULL, NULL);
+    if (FAILED (hr))
+    {
+        ERROR ("wmi error: Error 0x%x while getting property '%ls' "
+                "from object %p.", (unsigned) hr, property_name, dispatcher);
+        return (-1);
+    }
+
+    return (0);
+}
 
 wmi_result_list_t* wmi_query (wmi_connection_t *connection, const wchar_t *query)
 {
-    HRESULT hr;
+    int status = 0;
+    wmi_result_list_t *res = NULL;
 
-    wmi_result_list_t *res = malloc (sizeof (wmi_result_list_t));
-    BSTR query_bstr = SysAllocString (query);
-    hr = connection->services->lpVtbl->ExecQuery(
-            connection->services,
-            connection->language,
-            query_bstr,
-            WBEM_FLAG_FORWARD_ONLY,
-            NULL,
-            &res->results);
-    SysFreeString (query_bstr);
-    res->_returned_count = 0;
+    VARIANT result;
+    VARIANTARG args[1];
+    DISPPARAMS params;
 
-    if (hr == S_OK)
-        return (res);
+    params.cNamedArgs = 0;
+    params.rgvarg = args;
 
-    switch (hr)
-    {
-    case WBEM_E_ACCESS_DENIED:
-        ERROR ("wmi error: Access denied while querying. Query: %ls", query);
-        break;
-    case WBEM_E_INVALID_QUERY: 
-        ERROR ("wmi error: Invalid query: '%ls'", query);
-        break;
-    default:
-        ERROR ("wmi error: Unknown error [%x] during query: %ls", (unsigned)hr, query);
-    }
+    params.cArgs = 1;
+    params.rgvarg[0].vt = VT_BSTR;
+    params.rgvarg[0].bstrVal = SysAllocString(query);
+
+    status = wmi_invoke_method (connection->dispatcher, L"ExecQuery", &params, &result);
+    SysFreeString (params.rgvarg[0].bstrVal);
+    if (status)
+        goto err;
+
+    res = malloc (sizeof (wmi_result_list_t));
+    res->results = result.pdispVal;
+
+    status = wmi_get_property (res->results, L"Count", &result);
+    if (status)
+        goto err;
+
+    res->count = result.intVal;
+    res->last_result = -1;
+
+    return (res);
+
+err:
+    free (res);
+    ERROR ("wmi error: Unknown error during query: '%ls'", query);
     return (NULL);
 }
 
@@ -115,6 +186,7 @@ void wmi_result_list_release (wmi_result_list_t *results)
 {
     if (results)
         results->results->lpVtbl->Release (results->results);
+    free (results);
 }
 
 wmi_result_t* wmi_get_next_result (wmi_result_list_t *results)
@@ -122,35 +194,76 @@ wmi_result_t* wmi_get_next_result (wmi_result_list_t *results)
     if (!results)
         return (NULL);
 
-    wmi_result_t *result = malloc (sizeof (wmi_result_t));
-    HRESULT hr = results->results->lpVtbl->Next(
-            results->results,
-            WBEM_INFINITE, // TODO: maybe this shouldn't block infinitely?
-            1,
-            &result->result,
-            &results->_returned_count);
+    if (results->last_result + 1 >= results->count)
+        return (NULL);
 
-    if (hr == S_OK)
-        return (result);
-    else
+    HRESULT hr;
+    DISPPARAMS params;
+    VARIANTARG args[1];
+    VARIANT varResult;
+
+    params.cArgs = 1;
+    params.cNamedArgs = 0;
+
+    params.rgvarg = args;
+    params.rgvarg[0].vt = VT_UI4;
+    params.rgvarg[0].uintVal = results->last_result + 1;
+
+    hr = wmi_invoke_method (results->results, L"ItemIndex", &params, &varResult);
+    if (FAILED (hr))
     {
-        free (result);
+        ERROR ("wmi error: Cannot get next result. Error code 0x%x",
+                (unsigned) hr);
         return (NULL);
     }
+
+    results->last_result++;
+
+    wmi_result_t *result = malloc (sizeof (wmi_result_t));
+    result->result = varResult.pdispVal;
+    return (result);
 }
 
 void wmi_result_release (wmi_result_t *result)
 {
-    result->result->lpVtbl->Release (result->result);
+    if (result)
+        result->result->lpVtbl->Release (result->result);
+    free (result);
 }
 
 int wmi_result_get_value(const wmi_result_t *result, const wchar_t *name, VARIANT *value)
 {
-    HRESULT hr = result->result->lpVtbl->Get(result->result, name, 0, value, 0, 0);
 
-    if (hr == S_OK)
-        return 0;
-    
+    VARIANT varResult;
+    HRESULT hr;
+
+    hr = wmi_get_property (result->result, L"Properties_", &varResult);
+    if (hr != S_OK)
+        goto err;
+
+    DISPPARAMS params;
+    VARIANTARG args[1];
+
+    params.cArgs = 1;
+    params.cNamedArgs = 0;
+
+    params.rgvarg = args;
+    params.rgvarg[0].vt = VT_BSTR;
+    params.rgvarg[0].bstrVal = SysAllocString(name);
+
+    hr = wmi_invoke_method (varResult.pdispVal, L"Item", &params, &varResult);
+    SysFreeString(params.rgvarg[0].bstrVal);
+    if (hr != S_OK)
+        goto err;
+
+    hr = wmi_get_property (varResult.pdispVal, L"Value", value);
+    if (hr != S_OK)
+        goto err;
+
+    return (0);
+
+err:
+    // TODO: do proper error handling
     switch (hr)
     {
     case WBEM_E_NOT_FOUND:
@@ -169,74 +282,32 @@ void wmi_release(wmi_connection_t *connection)
     if (!connection)
         return;
     
-    if (connection->services)
-        connection->services->lpVtbl->Release(connection->services);
-
-    if (connection->locator)
-        connection->locator->lpVtbl->Release(connection->locator);
+    if (connection->dispatcher)
+        connection->dispatcher->lpVtbl->Release(connection->dispatcher);
 
     CoUninitialize();
 
-    SysFreeString(connection->language);
-    SysFreeString(connection->resource);
     free (connection);
 }
 
 wmi_connection_t* wmi_connect()
 {
-    wmi_connection_t *connection = malloc(sizeof (wmi_connection_t));
-    memset(connection, 0, sizeof (*connection));
-
-    connection->services = NULL;
-    connection->locator = NULL;
-    connection->resource = SysAllocString(L"ROOT\\CIMV2");
-    connection->language = SysAllocString(L"WQL");
-
+    wmi_connection_t *connection = malloc (sizeof (wmi_connection_t));
     HRESULT hr;
     hr = CoInitializeEx(0, COINIT_MULTITHREADED);
     if (hr != S_OK)
         goto err;
 
-    hr = CoInitializeSecurity(
-            NULL,
-            -1,
-            NULL,
-            NULL,
-            RPC_C_AUTHN_LEVEL_DEFAULT,
-            RPC_C_IMP_LEVEL_IMPERSONATE,
-            NULL,
-            EOAC_NONE,
-            NULL);
-    if (hr != S_OK)
-        goto err;
-
-    hr = CoCreateInstance(
-           &CLSID_WbemLocator,
-           0,
-           CLSCTX_INPROC_SERVER,
-           &IID_IWbemLocator,
-           (LPVOID *) &connection->locator);
-    if (hr != S_OK)
-        goto err;
-
-    hr = connection->locator->lpVtbl->ConnectServer(
-            connection->locator,
-            connection->resource,
-            NULL,
-            NULL,
-            NULL,
-            0,
-            NULL,
-            NULL,
-            &connection->services);
+    BSTR str = SysAllocString(L"winmgmts:root\\cimv2");
+    hr = CoGetObject(str, NULL, &IID_IDispatch, (void**)&connection->dispatcher);
     if (hr != S_OK)
         goto err;
 
     return connection;
 
 err:
-    ERROR("wmi error: Initialization failed. Error code: %d", (int)hr);
-    wmi_release(connection);
+    ERROR("wmi error: Initialization failed. Error code: %x", (unsigned)hr);
+    wmi_release (connection);
     return NULL;
 }
 
@@ -369,7 +440,8 @@ static int wmi_exec_query (wmi_query_t *q)
 
     sstrncpy (vl.plugin_instance, q->plugin_instance->base_name, sizeof (vl.plugin_instance));
 
-    results = wmi_query(wmi, q->statement);        
+    results = wmi_query (wmi, q->statement);        
+
 
     wmi_result_t *result;
     while ((result = wmi_get_next_result (results)))
@@ -413,9 +485,9 @@ static int wmi_exec_query (wmi_query_t *q)
             plugin_dispatch_values (&vl);
             free (values);
         }
-        wmi_result_release(result);
+        wmi_result_release (result);
     }
-    wmi_result_list_release(results);
+    wmi_result_list_release (results);
 
     return (0);
 }
