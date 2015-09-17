@@ -340,6 +340,15 @@ disk_la_LIBADD += -lperfstat
 endif
 endif
 
+if BUILD_PLUGIN_WMI
+pkglib_LTLIBRARIES += wmi.la
+wmi_la_SOURCES = wmi.c wmi_config.c wmi_variant_utils.c
+wmi_la_CFLAGS = $(AM_CFLAGS)
+wmi_la_LDFLAGS = $(PLUGIN_LDFLAGS) -L.
+wmi_la_DEPENDENCIES = libuuid.dll
+wmi_la_LIBADD = -loleaut32 -lole32 -luuid daemon/libcollectd.la
+endif
+
 if BUILD_PLUGIN_DNS
 pkglib_LTLIBRARIES += dns.la
 dns_la_SOURCES = dns.c utils_dns.c utils_dns.h
@@ -1423,6 +1432,10 @@ install-exec-hook:
 	$(INSTALL) -m 0644 $(srcdir)/types.db $(DESTDIR)$(pkgdatadir)/types.db;
 	$(INSTALL) -m 0644 $(srcdir)/postgresql_default.conf \
 		$(DESTDIR)$(pkgdatadir)/postgresql_default.conf;
+if COMPILING_ON_WIN32
+	$(mkinstalldirs) $(DESTDIR)$(sbindir)
+	$(INSTALL) -m 0644 $(srcdir)/libuuid.dll $(DESTDIR)$(sbindir)/libuuid.dll
+endif
 
 uninstall-hook:
 	rm -f $(DESTDIR)$(pkgdatadir)/types.db;
@@ -1438,3 +1451,9 @@ test_utils_vl_lookup_SOURCES = utils_vl_lookup_test.c testing.h
 test_utils_vl_lookup_LDADD = liblookup.la daemon/libplugin_mock.la
 
 TESTS = test_utils_mount test_utils_vl_lookup
+
+
+# Windows doesn't have a shared library for libuuid.dll, so we need to build
+# a wrapper.
+libuuid.dll:
+	${CC} -x c /dev/null -shared -o libuuid.dll -Wl,-whole-archive -luuid -Wl,-no-whole-archive

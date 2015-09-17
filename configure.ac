@@ -5271,6 +5271,12 @@ then
 	fi
 fi
 
+# Windows
+if test "x$ac_system" = "xWindows_NT"
+then
+	plugin_wmi="yes"
+fi
+
 if test "x$ac_system" = "xOpenBSD"
 then
 	plugin_tcpconns="yes"
@@ -5677,6 +5683,7 @@ AC_PLUGIN([virt],        [$plugin_virt],       [Virtual machine statistics])
 AC_PLUGIN([vmem],        [$plugin_vmem],       [Virtual memory statistics])
 AC_PLUGIN([vserver],     [$plugin_vserver],    [Linux VServer statistics])
 AC_PLUGIN([wireless],    [$plugin_wireless],   [Wireless statistics])
+AC_PLUGIN([wmi],         [$plugin_wmi],        [Windows Management Instrumentation])
 AC_PLUGIN([write_graphite], [yes],             [Graphite / Carbon output plugin])
 AC_PLUGIN([write_http],  [$with_libcurl],      [HTTP output plugin])
 AC_PLUGIN([write_kafka],  [$with_librdkafka],  [Kafka output plugin])
@@ -6054,6 +6061,7 @@ Configuration:
     vmem  . . . . . . . . $enable_vmem
     vserver . . . . . . . $enable_vserver
     wireless  . . . . . . $enable_wireless
+    wmi . . . . . . . . . $enable_wmi
     write_graphite  . . . $enable_write_graphite
     write_http  . . . . . $enable_write_http
     write_kafka . . . . . $enable_write_kafka
