@@ -558,6 +558,7 @@ endif
 if BUILD_PLUGIN_MATCH_REGEX
 pkglib_LTLIBRARIES += match_regex.la
 match_regex_la_SOURCES = match_regex.c
+match_regex_la_LIBADD = daemon/libcollectd.la
 match_regex_la_LDFLAGS = $(PLUGIN_LDFLAGS)
 endif
 
@@ -1085,6 +1086,7 @@ endif
 if BUILD_PLUGIN_TARGET_REPLACE
 pkglib_LTLIBRARIES += target_replace.la
 target_replace_la_SOURCES = target_replace.c
+target_replace_la_LIBADD = daemon/libcollectd.la
 target_replace_la_LDFLAGS = $(PLUGIN_LDFLAGS)
 endif
 
@@ -1097,6 +1099,7 @@ endif
 if BUILD_PLUGIN_TARGET_SET
 pkglib_LTLIBRARIES += target_set.la
 target_set_la_SOURCES = target_set.c
+target_set_la_LIBADD = daemon/libcollectd.la
 target_set_la_LDFLAGS = $(PLUGIN_LDFLAGS)
 endif
 

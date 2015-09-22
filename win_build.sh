@@ -90,6 +90,9 @@ export CFLAGS="-Drestrict=__restrict -I${GNULIB_DIR}"
   --host="mingw32" \
   --with-libcurl="${LIBCURL_DIR}" \
   --enable-logfile \
+  --enable-target_replace \
+  --enable-target_set \
+  --enable-match_regex \
   --enable-write_http \
   --enable-write_log \
   --enable-wmi

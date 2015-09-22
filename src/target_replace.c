@@ -24,6 +24,11 @@
  *   Florian Forster <octo at collectd.org>
  **/
 
+#ifdef WIN32
+#include <gnulib_config.h>
+#include <config.h>
+#endif /* WIN32 */
+
 #include "collectd.h"
 #include "common.h"
 #include "filter_chain.h"
@@ -193,10 +198,17 @@ static int tr_action_invoke (tr_action_t *act_head, /* {{{ */
         matches[0].rm_so, matches[0].rm_eo, act->replacement);
     if (subst_status == NULL)
     {
+#ifdef WIN32
+      ERROR ("Target `replace': subst (buffer = %s, start = %u, end = %u, "
+          "replacement = %s) failed.",
+          buffer, (unsigned) matches[0].rm_so, (unsigned) matches[0].rm_eo,
+          act->replacement);
+#else
       ERROR ("Target `replace': subst (buffer = %s, start = %zu, end = %zu, "
           "replacement = %s) failed.",
           buffer, (size_t) matches[0].rm_so, (size_t) matches[0].rm_eo,
           act->replacement);
+#endif /* WIN32 */
       continue;
     }
     sstrncpy (buffer, temp, sizeof (buffer));
