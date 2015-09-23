@@ -68,10 +68,10 @@ libcollectd_la_SOURCES =  \
 			utils_time.c utils_time.h \
 			types_list.c types_list.h \
 			utils_threshold.c utils_threshold.h
-libcollectd_la_CPPFLAGS =  $(AM_CPPFLAGS) $(LTDLINCL)
+libcollectd_la_CPPFLAGS = $(AM_CPPFLAGS) $(LTDLINCL)
 libcollectd_la_CFLAGS = $(AM_CFLAGS)
-libcollectd_la_LDFLAGS = $(COMMON_LDFLAGS) -L$(top_srcdir)/src/liboconfig/.libs # TODO: this is hacky
-libcollectd_la_LIBADD = -lm $(COMMON_LIBS) -lltdl -loconfig
+libcollectd_la_LDFLAGS = $(COMMON_LDFLAGS)
+libcollectd_la_LIBADD = -lm $(COMMON_LIBS) -lltdl $(top_builddir)/src/liboconfig/liboconfig.la
 
 
 collectd_SOURCES = collectd.c collectd.h

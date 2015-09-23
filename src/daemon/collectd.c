@@ -570,8 +570,7 @@ int configure_collectd (struct cmdline_config *config)
 	if (init_global_variables () != 0)
 		return (1);
 
-   if (config->test_config)
-	return (0);
+      return (0);
 }
 
 int main (int argc, char **argv)
@@ -580,28 +579,22 @@ int main (int argc, char **argv)
 	struct sigaction sig_term_action;
 	struct sigaction sig_usr1_action;
 	struct sigaction sig_pipe_action;
-	char *configfile = CONFIGFILE;
-	int test_config  = 0;
-	int test_readall = 0;
 	int status;
 #if COLLECT_DAEMON
 	struct sigaction sig_chld_action;
 	pid_t pid;
-	int daemonize    = 1;
 #endif
 	int exit_status = 0;
 
 	struct cmdline_config config;
 	memset(&config, 0, sizeof (config));
+        config.daemonize = 1;
 	config.configfile = CONFIGFILE;
 
 	read_cmdline(argc, argv, &config);
 
-	/* TODO kele: remove this workaround */
-	test_config = config->test_config;
-	test_readall = config->test_readall;
-	daemonize = config->daemonize;
-	configfile = config->configfile;
+	if (config.test_config)
+		return (0);
 
 	if (optind < argc)
 		exit_usage (1);
@@ -622,7 +615,7 @@ int main (int argc, char **argv)
      * Only daemonize if we're not being supervised
      * by upstart or systemd (when using Linux).
      */
-	if (daemonize
+	if (config.daemonize
 #ifdef KERNEL_LINUX
 	    && notify_upstart() == 0 && notify_systemd() == 0
 #endif
@@ -713,7 +706,7 @@ int main (int argc, char **argv)
 	 */
 	do_init ();
 
-	if (test_readall)
+	if (config.test_readall)
 	{
 		if (plugin_read_all_once () != 0)
 			exit_status = 1;
@@ -730,7 +723,7 @@ int main (int argc, char **argv)
 	do_shutdown ();
 
 #if COLLECT_DAEMON
-	if (daemonize)
+	if (config.daemonize)
 		pidfile_remove ();
 #endif /* COLLECT_DAEMON */
 
