@@ -71,14 +71,22 @@ libcollectd_la_SOURCES =  \
 libcollectd_la_CPPFLAGS = $(AM_CPPFLAGS) $(LTDLINCL)
 libcollectd_la_CFLAGS = $(AM_CFLAGS)
 libcollectd_la_LDFLAGS = $(COMMON_LDFLAGS)
-libcollectd_la_LIBADD = -lm $(COMMON_LIBS) -lltdl $(top_builddir)/src/liboconfig/liboconfig.la
+libcollectd_la_LIBADD = -lm $(COMMON_LIBS) -lltdl
+libcollectd_la_DEPENDENCIES =
+
+if BUILD_WITH_OWN_LIBOCONFIG
+libcollectd_la_LIBADD += $(top_builddir)/src/liboconfig/liboconfig.la
+libcollectd_la_DEPENDENCIES += $(top_builddir)/src/liboconfig/liboconfig.la
+else
+libcollectd_la_LIBADD += -loconfig
+endif
 
 
 collectd_SOURCES = collectd.c collectd.h
 collectd_CPPFLAGS =  $(AM_CPPFLAGS) $(LTDLINCL)
 collectd_CFLAGS = $(AM_CFLAGS)
 collectd_LDFLAGS = -export-dynamic
-collectd_LDADD = libcollectd.la ${COMMON_LIBS}
+collectd_LDADD = libcollectd.la $(COMMON_LIBS)
 collectd_DEPENDENCIES =
 
 # The daemon needs to call sg_init, so we need to link it against libstatgrab,
