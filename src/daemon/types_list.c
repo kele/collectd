@@ -39,11 +39,7 @@ static int parse_ds (data_source_t *dsrc, char *buf, size_t buf_len)
 
   if (buf_len < 11)
   {
-#ifdef WIN32
-    ERROR ("parse_ds: (buf_len = %u) < 11", (unsigned)buf_len);
-#else
-    ERROR ("parse_ds: (buf_len = %zu) < 11", buf_len);
-#endif
+    ERROR ("parse_ds: (buf_len = %"PRIu64") < 11", (uint64_t)buf_len);
     return (-1);
   }
 

@@ -5,7 +5,7 @@ endif
 SUBDIRS += daemon
 
 PLUGIN_LDFLAGS = -module -avoid-version -export-symbols-regex '\<module_register\>'
-if COMPILING_ON_WIN32
+if BUILD_WIN32
 PLUGIN_LDFLAGS += -shared -no-undefined
 endif
 
@@ -34,7 +34,8 @@ libmount_la_LIBADD = daemon/libcollectd.la
 liblookup_la_SOURCES = utils_vl_lookup.c utils_vl_lookup.h
 liblookup_la_LIBADD = daemon/libcollectd.la
 
-if COMPILING_ON_WIN32
+if BUILD_WIN32
+# TODO: we should build these executables on Windows as well.
 sbin_PROGRAMS =
 bin_PROGRAMS =
 else
@@ -51,9 +52,6 @@ collectd_nagios_LDADD =
 if BUILD_WITH_LIBSOCKET
 collectd_nagios_LDADD += -lsocket
 endif
-if BUILD_WITH_GNULIB
-collectd_nagios_LDADD += -lgnu
-endif
 if BUILD_AIX
 collectd_nagios_LDADD += -lm
 endif
@@ -68,9 +66,6 @@ collectdctl_LDADD =
 if BUILD_WITH_LIBSOCKET
 collectdctl_LDADD += -lsocket
 endif
-if BUILD_WITH_GNULIB
-collectdctl_LDADD += -lgnu
-endif
 if BUILD_AIX
 collectdctl_LDADD += -lm
 endif
@@ -82,9 +77,6 @@ collectd_tg_CPPFLAGS = $(AM_CPPFLAGS) -I$(top_srcdir)/src/libcollectdclient/coll
 collectd_tg_LDADD = daemon/libcollectd.la
 if BUILD_WITH_LIBSOCKET
 collectd_tg_LDADD += -lsocket
-endif
-if BUILD_WITH_GNULIB
-collectd_tg_LDADD += -lgnu
 endif
 if BUILD_WITH_LIBRT
 collectd_tg_LDADD += -lrt
@@ -103,6 +95,14 @@ pkglib_LTLIBRARIES =
 
 BUILT_SOURCES =
 CLEANFILES =
+
+# TODO: Because of the way Windows linking works, every plugin that will be
+# ported to Windows will need a line like this:
+#
+# write_http_la_LIBADD = daemon/libcollectd.la
+#
+# Windows linking doesn't support unresolved symbols, so libcollectd has to be
+# added to the libraries.
 
 if BUILD_PLUGIN_AGGREGATION
 pkglib_LTLIBRARIES += aggregation.la

@@ -24,8 +24,6 @@
  *   Sebastian Harl <sh at tokkee.org>
  **/
 
-#ifndef WIN32
-
 #if !defined(__GNUC__) || !__GNUC__
 # define __attribute__(x) /**/
 #endif
@@ -377,8 +375,6 @@ int main (int argc, char **argv)
 	free (collectd_argv);
 	return 0;
 } /* main */
-
-#endif /* !WIN32 */
 
 /* vim: set sw=4 ts=4 tw=78 noexpandtab : */
 

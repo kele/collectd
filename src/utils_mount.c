@@ -71,6 +71,7 @@
 #endif
 
 #ifdef WIN32
+/* TODO: is this include needed unconditionally? */
 #include <sys/stat.h>
 #include <fcntl.h>
 #endif
@@ -650,7 +651,7 @@ static cu_mount_t *cu_mount_getmntent (void)
 cu_mount_t *cu_mount_getlist(cu_mount_t **list)
 {
 #ifdef WIN32
-	return NULL;
+	return (NULL);
 #else
 	cu_mount_t *new;
 	cu_mount_t *first = NULL;

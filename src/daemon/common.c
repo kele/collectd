@@ -53,6 +53,7 @@
 #endif
 
 #ifdef WIN32
+/* TODO: could this be included unconditionally? */
 # include <unistd.h>
 #endif
 
@@ -68,15 +69,6 @@
 /* for ntohl and htonl */
 #if HAVE_ARPA_INET_H
 # include <arpa/inet.h>
-#endif
-
-#include <inttypes.h>
-
-#ifdef WIN32
-# undef PRIu64
-# define PRIu64 "I64u"
-# undef PRIi64
-# define PRIi64 "I64d"
 #endif
 
 #ifdef HAVE_LIBKSTAT

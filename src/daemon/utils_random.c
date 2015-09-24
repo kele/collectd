@@ -47,6 +47,7 @@ static void cdrand_seed (void)
   seed[2] = (unsigned short) (t >> 32);
 
 #ifdef WIN32
+  /* TODO: This is a workaround for missing erand48() on Windows */
   srand ((unsigned) t);
 #endif
 
@@ -62,6 +63,7 @@ double cdrand_d (void)
 #ifndef WIN32
   r = erand48 (seed);
 #else
+  /* TODO: This is a workaround for missing erand48() on Windows */
   r = (double)rand() / (double)RAND_MAX;
 #endif
   pthread_mutex_unlock (&lock);

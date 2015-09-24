@@ -376,4 +376,14 @@ int strtogauge (const char *string, gauge_t *ret_value);
 int strarray_add (char ***ret_array, size_t *ret_array_len, char const *str);
 void strarray_free (char **array, size_t array_len);
 
+#ifdef WIN32
+/* TODO: This is a workaround for an unrecognized problem with format string
+ * specifiers on MINGW64 + gnulib. */
+# undef PRIu64
+# define PRIu64 "I64u"
+# undef PRIi64
+# define PRIi64 "I64d"
+#endif
+
+
 #endif /* COMMON_H */

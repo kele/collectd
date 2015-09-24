@@ -11,6 +11,7 @@ if [ -d "_gnulib" ]; then
 else
   git clone git://git.savannah.gnu.org/gnulib.git
   cd gnulib
+  git checkout 2f8140bc8ce5501e31dcc665b42b5df64f84c20c
   ./gnulib-tool --create-testdir \
       --source-base=lib \
       --dir=${TOP_SRCDIR}/_build_aux/_gnulib \

@@ -100,7 +100,7 @@ AM_CONDITIONAL([BUILD_DARWIN],[test "x$x$ac_system" = "xDarwin"])
 AM_CONDITIONAL([BUILD_OPENBSD],[test "x$x$ac_system" = "xOpenBSD"])
 AM_CONDITIONAL([BUILD_AIX],[test "x$x$ac_system" = "xAIX"])
 AM_CONDITIONAL([BUILD_FREEBSD],[test "x$x$ac_system" = "xFreeBSD"])
-AM_CONDITIONAL([COMPILING_ON_WIN32],[test "x$x$ac_system" = "xWindows_NT"])
+AM_CONDITIONAL([BUILD_WIN32],[test "x$x$ac_system" = "xWindows_NT"])
 
 if test "x$ac_system" = "xLinux"
 then
@@ -738,6 +738,7 @@ then
 fi
 
 AC_CHECK_FUNCS(getpwnam_r getgrnam_r setgroups regcomp regerror regexec regfree)
+AC_CHECK_FUNC(getpwnam)
 
 socket_needs_socket="no"
 socket_needs_gnulib="no"

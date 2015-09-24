@@ -588,57 +588,17 @@ int configure_collectd (struct cmdline_config *config)
 	if (init_global_variables () != 0)
 		return (1);
 
-      return (0);
+	return (0);
 }
 
-#ifdef WIN32
-#include <windows.h>
-
-int windows_main (int argc, char **argv)
+int main (int argc, char **argv)
 {
-	int exit_status;
-	struct cmdline_config config;
-	int status;
-
-	memset(&config, 0, sizeof (config));
-	read_cmdline(argc, argv, &config);
-
-	plugin_init_ctx ();
-	if ((status = configure_collectd (&config)))
-		return (status);
-
-	/*
-	 * run the actual loops
-	 */
-	do_init ();
-
-	if (config.test_readall)
-	{
-		if (plugin_read_all_once () != 0)
-			exit_status = 1;
-	}
-	else
-	{
-		INFO ("Initialization complete, entering read-loop.");
-		do_loop ();
-	}
-
-	/* close syslog */
-	INFO ("Exiting normally.");
-
-	do_shutdown ();
-
-	return (exit_status);
-}
-
-#else /* ! WIN32 */
-
-int linux_main (int argc, char **argv)
-{
+#ifndef WIN32
 	struct sigaction sig_int_action;
 	struct sigaction sig_term_action;
 	struct sigaction sig_usr1_action;
 	struct sigaction sig_pipe_action;
+#endif /* !WIN32 */
 	int status;
 #if COLLECT_DAEMON
 	struct sigaction sig_chld_action;
@@ -652,9 +612,6 @@ int linux_main (int argc, char **argv)
 	config.configfile = CONFIGFILE;
 
 	read_cmdline(argc, argv, &config);
-
-	if (config.test_config)
-		return (0);
 
 	if (optind < argc)
 		exit_usage (1);
@@ -730,6 +687,7 @@ int linux_main (int argc, char **argv)
 	} /* if (daemonize) */
 #endif /* COLLECT_DAEMON */
 
+#ifndef WIN32
 	memset (&sig_pipe_action, '\0', sizeof (sig_pipe_action));
 	sig_pipe_action.sa_handler = SIG_IGN;
 	sigaction (SIGPIPE, &sig_pipe_action, NULL);
@@ -763,6 +721,7 @@ int linux_main (int argc, char **argv)
 				sstrerror (errno, errbuf, sizeof (errbuf)));
 		return (1);
 	}
+#endif /* !WIN32 */
 
 	/*
 	 * run the actual loops
@@ -791,14 +750,4 @@ int linux_main (int argc, char **argv)
 #endif /* COLLECT_DAEMON */
 
 	return (exit_status);
-} /* int linux_main */
-#endif /* WIN32 */
-
-int main(int argc, char **argv)
-{
-#ifdef WIN32
-	return (windows_main (argc, argv));
-#else
-	return (linux_main (argc, argv));
-#endif
-}
+} /* int main */

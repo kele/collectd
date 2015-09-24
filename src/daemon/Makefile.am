@@ -15,14 +15,14 @@ AM_CPPFLAGS += -DPKGDATADIR='"${pkgdatadir}"'
 
 COMMON_LDFLAGS =
 
-if COMPILING_ON_WIN32
+if BUILD_WIN32
 COMMON_LDFLAGS += -no-undefined -shared
 endif
 
 # Link to these libraries..
 COMMON_LIBS =
-if COMPILING_ON_WIN32
-COMMON_LIBS += -lpthread -lws2_32 # TODO: do I need the -lpthread?
+if BUILD_WIN32
+COMMON_LIBS += -lws2_32
 endif
 if BUILD_WITH_GNULIB
 COMMON_LIBS += -lgnu

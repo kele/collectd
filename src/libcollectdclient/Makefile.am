@@ -17,7 +17,7 @@ libcollectdclient_la_CPPFLAGS = $(AM_CPPFLAGS) \
 				-I$(top_srcdir)/src/daemon
 libcollectdclient_la_LDFLAGS = -version-info 1:0:0
 libcollectdclient_la_LIBADD =
-if COMPILING_ON_WIN32
+if BUILD_WIN32
 libcollectdclient_la_LDFLAGS += -shared -no-undefined
 libcollectdclient_la_LIBADD += -lgnu -lws2_32 -liphlpapi
 endif
