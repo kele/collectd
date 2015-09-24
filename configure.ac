@@ -737,8 +737,7 @@ then
 	CFLAGS="$CFLAGS -D_REENTRANT=1"
 fi
 
-AC_CHECK_FUNCS(getpwnam_r getgrnam_r setgroups regcomp regerror regexec regfree)
-AC_CHECK_FUNC(getpwnam)
+AC_CHECK_FUNCS(getpwnam_r getgrnam_r setgroups regcomp regerror regexec regfree getpwnam)
 
 socket_needs_socket="no"
 socket_needs_gnulib="no"
