@@ -5,6 +5,9 @@ endif
 SUBDIRS += daemon
 
 PLUGIN_LDFLAGS = -module -avoid-version -export-symbols-regex '\<module_register\>'
+if BUILD_WIN32
+PLUGIN_LDFLAGS += -shared -no-undefined
+endif
 
 if COMPILER_IS_GCC
 AM_CFLAGS = -Wall -Werror
@@ -26,13 +29,19 @@ AUTOMAKE_OPTIONS = subdir-objects
 noinst_LTLIBRARIES = libmount.la liblookup.la
 
 libmount_la_SOURCES = utils_mount.c utils_mount.h
-libmount_la_LIBADD = daemon/libcommon.la
+libmount_la_LIBADD = daemon/libcollectd.la
 
 liblookup_la_SOURCES = utils_vl_lookup.c utils_vl_lookup.h
-liblookup_la_LIBADD = daemon/libavltree.la daemon/libcommon.la
+liblookup_la_LIBADD = daemon/libcollectd.la
 
+if BUILD_WIN32
+# TODO: we should build these executables on Windows as well.
+sbin_PROGRAMS =
+bin_PROGRAMS =
+else
 sbin_PROGRAMS = collectdmon
 bin_PROGRAMS = collectd-nagios collectdctl collectd-tg
+endif
 
 collectdmon_SOURCES = collectdmon.c
 collectdmon_CPPFLAGS = $(AM_CPPFLAGS)
@@ -65,7 +74,7 @@ collectdctl_DEPENDENCIES = libcollectdclient/libcollectdclient.la
 
 collectd_tg_SOURCES = collectd-tg.c
 collectd_tg_CPPFLAGS = $(AM_CPPFLAGS) -I$(top_srcdir)/src/libcollectdclient/collectd -I$(top_builddir)/src/libcollectdclient/collectd
-collectd_tg_LDADD = daemon/libheap.la
+collectd_tg_LDADD = daemon/libcollectd.la
 if BUILD_WITH_LIBSOCKET
 collectd_tg_LDADD += -lsocket
 endif
@@ -86,6 +95,11 @@ pkglib_LTLIBRARIES =
 
 BUILT_SOURCES =
 CLEANFILES =
+
+# TODO: Because of the way Windows linking works, every plugin that will be
+# ported to Windows will need a line like this:
+#
+# *_la_LIBADD = daemon/libcollectd.la
 
 if BUILD_PLUGIN_AGGREGATION
 pkglib_LTLIBRARIES += aggregation.la
@@ -126,6 +140,9 @@ apcups_la_LDFLAGS = $(PLUGIN_LDFLAGS)
 apcups_la_LIBADD =
 if BUILD_WITH_LIBSOCKET
 apcups_la_LIBADD += -lsocket
+endif
+if BUILD_WITH_GNULIB
+apcups_la_LIBADD += -lgnu
 endif
 endif
 
@@ -324,6 +341,15 @@ disk_la_LIBADD += -lperfstat
 endif
 endif
 
+if BUILD_PLUGIN_WMI
+pkglib_LTLIBRARIES += wmi.la
+wmi_la_SOURCES = wmi.c wmi_config.c wmi_variant_utils.c
+wmi_la_CFLAGS = $(AM_CFLAGS)
+wmi_la_LDFLAGS = $(PLUGIN_LDFLAGS) -L.
+wmi_la_DEPENDENCIES = libuuid.dll
+wmi_la_LIBADD = -loleaut32 -lole32 -luuid daemon/libcollectd.la
+endif
+
 if BUILD_PLUGIN_DNS
 pkglib_LTLIBRARIES += dns.la
 dns_la_SOURCES = dns.c utils_dns.c utils_dns.h
@@ -394,6 +420,9 @@ hddtemp_la_LDFLAGS = $(PLUGIN_LDFLAGS)
 hddtemp_la_LIBADD =
 if BUILD_WITH_LIBSOCKET
 hddtemp_la_LIBADD += -lsocket
+endif
+if BUILD_WITH_GNULIB
+hddtemp_la_LIBADD += -lgnu
 endif
 endif
 
@@ -487,6 +516,7 @@ endif # BUILD_PLUGIN_LOAD
 if BUILD_PLUGIN_LOGFILE
 pkglib_LTLIBRARIES += logfile.la
 logfile_la_SOURCES = logfile.c
+logfile_la_LIBADD = daemon/libcollectd.la
 logfile_la_LDFLAGS = $(PLUGIN_LDFLAGS)
 endif
 
@@ -535,6 +565,7 @@ endif
 if BUILD_PLUGIN_MATCH_REGEX
 pkglib_LTLIBRARIES += match_regex.la
 match_regex_la_SOURCES = match_regex.c
+match_regex_la_LIBADD = daemon/libcollectd.la
 match_regex_la_LDFLAGS = $(PLUGIN_LDFLAGS)
 endif
 
@@ -557,6 +588,9 @@ mbmon_la_LDFLAGS = $(PLUGIN_LDFLAGS)
 mbmon_la_LIBADD =
 if BUILD_WITH_LIBSOCKET
 mbmon_la_LIBADD += -lsocket
+endif
+if BUILD_WITH_GNULIB
+mbmon_la_LIBADD += -lgnu
 endif
 endif
 
@@ -582,6 +616,9 @@ memcached_la_LDFLAGS = $(PLUGIN_LDFLAGS)
 memcached_la_LIBADD =
 if BUILD_WITH_LIBSOCKET
 memcached_la_LIBADD += -lsocket
+endif
+if BUILD_WITH_GNULIB
+memcached_la_LIBADD += -lgnu
 endif
 endif
 
@@ -668,6 +705,9 @@ network_la_LIBADD = -lpthread
 if BUILD_WITH_LIBSOCKET
 network_la_LIBADD += -lsocket
 endif
+if BUILD_WITH_GNULIB
+network_la_LIBADD += -lgnu
+endif
 if BUILD_WITH_LIBGCRYPT
 network_la_CPPFLAGS += $(GCRYPT_CPPFLAGS)
 network_la_LDFLAGS += $(GCRYPT_LDFLAGS)
@@ -722,6 +762,9 @@ ntpd_la_LIBADD =
 if BUILD_WITH_LIBSOCKET
 ntpd_la_LIBADD += -lsocket
 endif
+if BUILD_WITH_GNULIB
+ntpd_la_LIBADD += -lgnu
+endif
 endif
 
 if BUILD_PLUGIN_NUMA
@@ -745,6 +788,9 @@ olsrd_la_LDFLAGS = $(PLUGIN_LDFLAGS)
 olsrd_la_LIBADD =
 if BUILD_WITH_LIBSOCKET
 olsrd_la_LIBADD += -lsocket
+endif
+if BUILD_WITH_GNULIB
+olsrd_la_LIBADD += -lgnu
 endif
 endif
 
@@ -1023,6 +1069,7 @@ endif
 if BUILD_PLUGIN_TARGET_REPLACE
 pkglib_LTLIBRARIES += target_replace.la
 target_replace_la_SOURCES = target_replace.c
+target_replace_la_LIBADD = daemon/libcollectd.la
 target_replace_la_LDFLAGS = $(PLUGIN_LDFLAGS)
 endif
 
@@ -1035,6 +1082,7 @@ endif
 if BUILD_PLUGIN_TARGET_SET
 pkglib_LTLIBRARIES += target_set.la
 target_set_la_SOURCES = target_set.c
+target_set_la_LIBADD = daemon/libcollectd.la
 target_set_la_LDFLAGS = $(PLUGIN_LDFLAGS)
 endif
 
@@ -1087,6 +1135,9 @@ tokyotyrant_la_LDFLAGS = $(PLUGIN_LDFLAGS) $(BUILD_WITH_LIBTOKYOTYRANT_LDFLAGS)
 tokyotyrant_la_LIBADD  = $(BUILD_WITH_LIBTOKYOTYRANT_LIBS)
 if BUILD_WITH_LIBSOCKET
 tokyotyrant_la_LIBADD += -lsocket
+endif
+if BUILD_WITH_GNULIB
+tokyotyrant_la_LIBADD += -lgnu
 endif
 endif
 
@@ -1194,7 +1245,10 @@ write_http_la_SOURCES = write_http.c \
 			utils_format_json.c utils_format_json.h
 write_http_la_LDFLAGS = $(PLUGIN_LDFLAGS)
 write_http_la_CFLAGS = $(AM_CFLAGS)
-write_http_la_LIBADD =
+write_http_la_LIBADD = daemon/libcollectd.la
+if BUILD_WITH_GNULIB
+write_http_la_LIBADD += -lgnu
+endif
 if BUILD_WITH_LIBCURL
 write_http_la_CFLAGS += $(BUILD_WITH_LIBCURL_CFLAGS)
 write_http_la_LIBADD += $(BUILD_WITH_LIBCURL_LIBS)
@@ -1215,6 +1269,10 @@ endif
 
 if BUILD_PLUGIN_WRITE_LOG
 pkglib_LTLIBRARIES += write_log.la
+write_log_la_LIBADD = daemon/libcollectd.la
+if BUILD_WITH_GNULIB
+write_log_la_LIBADD += -lgnu
+endif
 write_log_la_SOURCES = write_log.c \
                         utils_format_graphite.c utils_format_graphite.h
 write_log_la_LDFLAGS = $(PLUGIN_LDFLAGS)
@@ -1375,6 +1433,10 @@ install-exec-hook:
 	$(INSTALL) -m 0644 $(srcdir)/types.db $(DESTDIR)$(pkgdatadir)/types.db;
 	$(INSTALL) -m 0644 $(srcdir)/postgresql_default.conf \
 		$(DESTDIR)$(pkgdatadir)/postgresql_default.conf;
+if BUILD_WIN32
+	$(mkinstalldirs) $(DESTDIR)$(sbindir)
+	$(INSTALL) -m 0644 $(srcdir)/libuuid.dll $(DESTDIR)$(sbindir)/libuuid.dll
+endif
 
 uninstall-hook:
 	rm -f $(DESTDIR)$(pkgdatadir)/types.db;
@@ -1390,3 +1452,9 @@ test_utils_vl_lookup_SOURCES = utils_vl_lookup_test.c testing.h
 test_utils_vl_lookup_LDADD = liblookup.la daemon/libplugin_mock.la
 
 TESTS = test_utils_mount test_utils_vl_lookup
+
+
+# Windows doesn't have a shared library for libuuid.dll, so we need to build
+# a wrapper.
+libuuid.dll:
+	${CC} -x c /dev/null -shared -o libuuid.dll -Wl,-whole-archive -luuid -Wl,-no-whole-archive
