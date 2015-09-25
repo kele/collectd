@@ -24,6 +24,12 @@
  *   Florian octo Forster <ff at octo.it>
  **/
 
+#ifdef WIN32
+# include <gnulib_config.h>
+# include <config.h>
+# include <sys/time.h>
+#endif
+
 #include "collectd.h"
 #include "utils_time.h"
 #include "plugin.h"

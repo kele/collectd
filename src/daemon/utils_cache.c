@@ -561,8 +561,8 @@ gauge_t *uc_get_rate (const data_set_t *ds, const value_list_t *vl)
   if (ret_num != (size_t) ds->ds_num)
   {
     ERROR ("utils_cache: uc_get_rate: ds[%s] has %i values, "
-	"but uc_get_rate_by_name returned %zu.",
-	ds->type, ds->ds_num, ret_num);
+	"but uc_get_rate_by_name returned %"PRIu64".",
+	ds->type, ds->ds_num, (uint64_t)ret_num);
     sfree (ret);
     return (NULL);
   }
